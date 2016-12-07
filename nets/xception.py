@@ -199,7 +199,7 @@ def xception_keras_arg_scope(hdf5_file, weight_decay=0.00001):
 
 
 def xception_keras(inputs,
-                   hdf5_file,
+                   hdf5_file=None,
                    num_classes=1000,
                    is_training=True,
                    dropout_keep_prob=0.5,
@@ -226,10 +226,10 @@ def xception_keras(inputs,
         params = batch_norm_params.copy()
 
         # Batch norm. parameters.
-        k = 'batchnormalization_%i' % idx
-        kb = 'batchnormalization_%i_gamma' % idx
-        km = 'batchnormalization_%i_running_mean' % idx
-        kv = 'batchnormalization_%i_running_std' % idx
+        k = 'batchnormalization_%i' % bn_params.idx
+        kb = 'batchnormalization_%i_gamma' % bn_params.idx
+        km = 'batchnormalization_%i_running_mean' % bn_params.idx
+        kv = 'batchnormalization_%i_running_std' % bn_params.idx
         param['param_initializers'] = {
             'beta': hdf5_file[k][kb][:],
             'moving_mean': hdf5_file[k][km][:],
@@ -239,31 +239,61 @@ def xception_keras(inputs,
     bn_params.idx = 0
 
     def conv2d_weights():
-        conv2d_weights.idx += 1
         init = tf.contrib.layers.variance_scaling_initializer()
 
         def _initializer(shape, dtype, partition_info=None):
+            conv2d_weights.idx += 1
             print('Conv2d:', shape)
-            return init(shape, dtype, partition_info)
+            k = 'convolution2d_%i' % conv2d_weights.idx
+            kw = 'convolution2d_%i_W' % conv2d_weights.idx
+            weights = hdf5_file[k][kw][:]
+            print('Conv2d keras:', weights.shape)
+            return weights.astype(dtype)
+            # return init(shape, dtype, partition_info)
     conv2d_weights.idx = 0
 
     def sepconv2d_weights():
-        sepconv2d_weights.idx += 1
         init = tf.contrib.layers.variance_scaling_initializer()
 
         def _initializer(shape, dtype, partition_info=None):
+            sepconv2d_weights.idx += 1
             print('SepConv2d:', shape)
-            return init(shape, dtype, partition_info)
+            k = 'separableconvolution2d_%i' % sepconv2d_weights.idx
+            kd = 'separableconvolution2d_%i_depthwise_kernel' % sepconv2d_weights.idx
+            kp = 'separableconvolution2d_%i_pointwise_kernel' % sepconv2d_weights.idx
+            weights = hdf5_file[k][kd][:]
+            weights = hdf5_file[k][kp][:]
+            print('SepConv2d keras:', weights.shape)
+            return weights.astype(dtype)
+            # return init(shape, dtype, partition_info)
     sepconv2d_weights.idx = 0
+    sepconv2d_weights.subidx = 0
 
     def dense_weights():
-        dense_weights.idx += 1
         init = tf.contrib.layers.variance_scaling_initializer()
 
         def _initializer(shape, dtype, partition_info=None):
+            dense_weights.idx += 1
             print('Dense:', shape)
-            return init(shape, dtype, partition_info)
+            k = 'dense_%i' % dense_weights.idx
+            kw = 'dense_%i_W' % dense_weights.idx
+            weights = hdf5_file[k][kw][:]
+            return weights.astype(dtype)
+            # return init(shape, dtype, partition_info)
     dense_weights.idx = 1
+
+    def dense_biases():
+        init = tf.contrib.layers.variance_scaling_initializer()
+
+        def _initializer(shape, dtype, partition_info=None):
+            dense_biases.idx += 1
+            print('Dense:', shape)
+            k = 'dense_%i' % dense_biases.idx
+            kb = 'dense_%i_b' % dense_biases.idx
+            biases = hdf5_file[k][kb][:]
+            return biases.astype(dtype)
+            # return init(shape, dtype, partition_info)
+    dense_biases.idx = 1
 
     with tf.variable_scope(scope, 'xception', [inputs]):
         # Block 1.
@@ -383,7 +413,8 @@ def xception_keras(inputs,
         with tf.variable_scope(end_point):
             net = tf.reduce_mean(net, [1, 2], name='reduce_avg')
             logits = slim.fully_connected(net, 1000, activation_fn=None,
-                                          weights_initializer=dense_weights())
+                                          weights_initializer=dense_weights(),
+                                          biases_initializer=dense_biases())
             end_points['logits'] = logits
             end_points['predictions'] = prediction_fn(logits, scope='Predictions')
 
