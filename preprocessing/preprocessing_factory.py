@@ -21,6 +21,9 @@ from __future__ import print_function
 import tensorflow as tf
 
 from preprocessing import gtsrb_32_preprocessing
+# from preprocessing import cifarnet_preprocessing
+from preprocessing import inception_preprocessing
+from preprocessing import vgg_preprocessing
 
 slim = tf.contrib.slim
 
@@ -46,9 +49,12 @@ def get_preprocessing(name, is_training=False):
         'atrousnet': gtsrb_32_preprocessing,
         'atrousnet_same': gtsrb_32_preprocessing,
         'atrousnet_valid': gtsrb_32_preprocessing,
-        'tinynet': gtsrb_32_preprocessing,
-        'xception': gtsrb_32_preprocessing,
-    }
+        'xception': inception_preprocessing,
+        'vgg': vgg_preprocessing,
+        'vgg_a': vgg_preprocessing,
+        'vgg_16': vgg_preprocessing,
+        'vgg_19': vgg_preprocessing,
+      }
 
     if name not in preprocessing_fn_map:
         raise ValueError('Preprocessing name [%s] was not recognized' % name)

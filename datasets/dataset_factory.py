@@ -20,11 +20,14 @@ from __future__ import print_function
 
 from datasets import gtsrb_32
 from datasets import gtsrb_32_transform
-
+from datasets import cifar10
+from datasets import imagenet
 
 datasets_map = {
     'gtsrb_32': gtsrb_32,
     'gtsrb_32_transform': gtsrb_32_transform,
+    'cifar10': cifar10,
+    'imagenet': imagenet,
 }
 
 
