@@ -115,34 +115,86 @@ python eval_image_classifier.py \
 # ===========================================================================
 # Xception
 # ===========================================================================
-DATASET_DIR=../traffic-signs-data/GTSRB_size32
-TRAIN_DIR=logs/
-CHECKPOINT_PATH=logs/
+DATASET_DIR=/media/paul/DataExt4/ImageNet/Dataset
+DATASET_DIR=../datasets/ImageNet
+TRAIN_DIR=./logs/xception
+CHECKPOINT_PATH=/media/paul/DataExt4/ImageNet/Training/ckpts/inception_v3.ckpt
+CHECKPOINT_PATH=./checkpoints/xception_weights_tf_dim_ordering_tf_kernels.h5
+
 python train_image_classifier.py \
     --train_dir=${TRAIN_DIR} \
-    --dataset_name=gtsrb_32_transform \
-    --dataset_split_name=train \
     --dataset_dir=${DATASET_DIR} \
+    --dataset_name=imagenet \
+    --dataset_split_name=train \
+    --model_name=xception \
+    --labels_offset=1 \
+    --checkpoint_path=${CHECKPOINT_PATH} \
     --save_summaries_secs=60 \
     --save_interval_secs=60 \
-    --labels_offset=1 \
-    --model_name=xception \
+    --weight_decay=0.00001 \
     --optimizer=rmsprop \
-    --rmsprop_momentum=0.9 \
-    --rmsprop_decay=0.9 \
-    --opt_epsilon=1.0 \
-    --learning_rate=1.0 \
-    --num_epochs_per_decay=0.1 \
-    --learning_rate_decay_factor=0.9 \
-    --weight_decay=0.00005 \
-    --batch_size=128
+    --learning_rate=0.00005 \
+    --batch_size=4
 
-DATASET_DIR=../traffic-signs-data/GTSRB_size32
-CHECKPOINT_FILE=logs
+python train_image_classifier.py \
+    --train_dir=${TRAIN_DIR} \
+    --dataset_dir=${DATASET_DIR} \
+    --dataset_name=imagenet \
+    --dataset_split_name=train \
+    --model_name=xception \
+    --labels_offset=1 \
+    --save_summaries_secs=60 \
+    --save_interval_secs=60 \
+    --weight_decay=0.00001 \
+    --optimizer=rmsprop \
+    --learning_rate=0.00005 \
+    --batch_size=1
+
+
+CHECKPOINT_PATH=/media/paul/DataExt4/ImageNet/Training/ckpts/inception_v3.ckpt
+CHECKPOINT_PATH=/media/paul/DataExt4/ImageNet/Training/logs
+DATASET_DIR=/media/paul/DataExt4/ImageNet/Dataset
+DATASET_DIR=../datasets/ImageNet
 python eval_image_classifier.py \
     --alsologtostderr \
-    --checkpoint_path=${CHECKPOINT_FILE} \
+    --checkpoint_path=${CHECKPOINT_PATH} \
     --dataset_dir=${DATASET_DIR} \
-    --dataset_name=gtsrb_32 \
-    --dataset_split_name=test \
+    --dataset_name=imagenet \
+    --dataset_split_name=validation \
     --model_name=xception
+
+# ===========================================================================
+# Inception v3
+# ===========================================================================
+DATASET_DIR=/media/paul/DataExt4/ImageNet/Dataset
+DATASET_DIR=../datasets/ImageNet
+TRAIN_DIR=./logs/inception_v3
+CHECKPOINT_PATH=/media/paul/DataExt4/ImageNet/Training/ckpts/inception_v3.ckpt
+CHECKPOINT_PATH=./checkpoints/inception_v3.ckpt
+python train_image_classifier.py \
+    --train_dir=${TRAIN_DIR} \
+    --dataset_dir=${DATASET_DIR} \
+    --dataset_name=imagenet \
+    --dataset_split_name=train \
+    --model_name=inception_v3 \
+    --checkpoint_path=${CHECKPOINT_PATH} \
+    --save_summaries_secs=60 \
+    --save_interval_secs=60 \
+    --weight_decay=0.00001 \
+    --optimizer=rmsprop \
+    --learning_rate=0.00005 \
+    --batch_size=4
+
+
+CHECKPOINT_PATH=/media/paul/DataExt4/ImageNet/Training/logs
+CHECKPOINT_PATH=./checkpoints/inception_v3.ckpt
+DATASET_DIR=/media/paul/DataExt4/ImageNet/Dataset
+DATASET_DIR=../datasets/ImageNet
+python eval_image_classifier.py \
+    --alsologtostderr \
+    --checkpoint_path=${CHECKPOINT_PATH} \
+    --dataset_dir=${DATASET_DIR} \
+    --dataset_name=imagenet \
+    --dataset_split_name=validation \
+    --model_name=inception_v3
+

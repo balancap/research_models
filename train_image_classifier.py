@@ -343,7 +343,7 @@ def main(_):
         # Select the network #
         network_fn = nets_factory.get_network_fn(
             FLAGS.model_name,
-            num_classes=(dataset.num_classes),
+            num_classes=(dataset.num_classes - FLAGS.labels_offset),
             weight_decay=FLAGS.weight_decay,
             is_training=True)
 
@@ -364,7 +364,7 @@ def main(_):
                 common_queue_min=10 * FLAGS.batch_size,
                 shuffle=True)
             [image, label] = provider.get(['image', 'label'])
-            # label -= FLAGS.labels_offset
+            label -= FLAGS.labels_offset
 
             train_image_size = FLAGS.train_image_size or network_fn.default_image_size
 
@@ -376,7 +376,7 @@ def main(_):
                 num_threads=FLAGS.num_preprocessing_threads,
                 capacity=5 * FLAGS.batch_size)
             labels = slim.one_hot_encoding(
-                labels, dataset.num_classes + FLAGS.labels_offset)
+                labels, dataset.num_classes - FLAGS.labels_offset)
             batch_queue = slim.prefetch_queue.prefetch_queue(
                 [images, labels], capacity=2 * deploy_config.num_clones)
 

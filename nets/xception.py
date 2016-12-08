@@ -140,14 +140,15 @@ def xception_arg_scope(weight_decay=0.00001, stddev=0.1):
     with slim.arg_scope([slim.conv2d, slim.fully_connected, slim.separable_convolution2d],
                         weights_regularizer=slim.l2_regularizer(weight_decay)):
         with slim.arg_scope(
-            [slim.conv2d, slim.separable_convolution2d],
-            padding='SAME',
-            weights_initializer=tf.contrib.layers.variance_scaling_initializer(factor=2.0,
-                                                                               mode='FAN_IN',
-                                                                               uniform=False),
-            activation_fn=tf.nn.relu,
-            normalizer_fn=slim.batch_norm,
-            normalizer_params=batch_norm_params) as sc:
+                [slim.conv2d, slim.separable_convolution2d],
+                padding='SAME',
+                weights_initializer=tf.contrib.layers.variance_scaling_initializer(factor=2.0, mode='FAN_IN', uniform=False),
+                activation_fn=tf.nn.relu,
+                normalizer_fn=slim.batch_norm,
+                normalizer_params=batch_norm_params):
+
+            with slim.arg_scope([slim.max_pool2d],
+                                padding='SAME') as sc:
                 return sc
 
 
@@ -403,7 +404,7 @@ def xception_keras(inputs,
             net = slim.separable_convolution2d(net, 1536, [3, 3], 1, scope='sepconv1',
                                                weights_initializer=sepconv2d_weights(),
                                                normalizer_params=bn_params())
-            net = slim.separable_convolution2d(net, 2048, [3, 3], 1, scope='sepconv2',,
+            net = slim.separable_convolution2d(net, 2048, [3, 3], 1, scope='sepconv2',
                                                weights_initializer=sepconv2d_weights(),
                                                normalizer_params=bn_params())
         end_points[end_point] = net

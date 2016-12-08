@@ -1,3 +1,10 @@
 research_models.sublime-project
 research_models.sublime-workspace
 notebooks/.ipynb_checkpoints/
+checkpoints/inception_v3.ckpt
+checkpoints/inception_v4.ckpt
+datasets/__pycache__/
+deployment/__pycache__/
+logs/
+nets/__pycache__/
+preprocessing/__pycache__/

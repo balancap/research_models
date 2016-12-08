@@ -20,10 +20,9 @@ import tensorflow as tf
 
 from nets import cifarnet
 from nets import atrousnet
-from nets import idsianet
 from nets import tinynet
 
-# from nets import inception
+from nets import inception
 # from nets import overfeat
 # from nets import resnet_v1
 # from nets import resnet_v2
@@ -33,7 +32,6 @@ from nets import xception
 slim = tf.contrib.slim
 
 networks_map = {'cifarnet': cifarnet.cifarnet,
-                'idsianet': idsianet.idsianet,
                 'atrousnet': atrousnet.atrousnet_valid,
                 'atrousnet_same': atrousnet.atrousnet_same,
                 'atrousnet_valid': atrousnet.atrousnet_valid,
@@ -42,26 +40,21 @@ networks_map = {'cifarnet': cifarnet.cifarnet,
                 'vgg_a': vgg.vgg_a,
                 'vgg_16': vgg.vgg_16,
                 'vgg_19': vgg.vgg_19,
-                # 'inception_v1': inception.inception_v1,
-                # 'inception_v2': inception.inception_v2,
-                # 'inception_v3': inception.inception_v3,
-                # 'inception_resnet_v2': inception.inception_resnet_v2,
+                'inception_v3': inception.inception_v3,
+                'inception_resnet_v2': inception.inception_resnet_v2,
                 }
 
 arg_scopes_map = {'cifarnet': cifarnet.cifarnet_arg_scope,
-                  'idsianet': idsianet.idsianet_arg_scope,
                   'atrousnet': atrousnet.atrousnet_valid_arg_scope,
                   'atrousnet_same': atrousnet.atrousnet_same_arg_scope,
                   'atrousnet_valid': atrousnet.atrousnet_valid_arg_scope,
                   'tinynet': tinynet.tinynet_arg_scope,
                   'xception': xception.xception_arg_scope,
-                  'vgg_a': vgg.vgg_a,
-                  'vgg_16': vgg.vgg_16,
-                  'vgg_19': vgg.vgg_19,
-                  # 'inception_v1': inception.inception_v1,
-                  # 'inception_v2': inception.inception_v2,
-                  # 'inception_v3': inception.inception_v3,
-                  # 'inception_resnet_v2': inception.inception_resnet_v2,
+                  'vgg_a': vgg.vgg_arg_scope,
+                  'vgg_16': vgg.vgg_arg_scope,
+                  'vgg_19': vgg.vgg_arg_scope,
+                  'inception_v3': inception.inception_v3_arg_scope,
+                  'inception_resnet_v2': inception.inception_resnet_v2_arg_scope,
                   }
 
 
