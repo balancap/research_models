@@ -146,63 +146,146 @@ def xception_arg_scope(weight_decay=0.00001, stddev=0.1):
                 activation_fn=tf.nn.relu,
                 normalizer_fn=slim.batch_norm,
                 normalizer_params=batch_norm_params):
-
-            with slim.arg_scope([slim.max_pool2d],
-                                padding='SAME') as sc:
+            with slim.arg_scope([slim.max_pool2d], padding='SAME') as sc:
                 return sc
 
 
 # =========================================================================== #
-# Xception implementation (Keras hack!)
+# Xception arg scope (Keras hack!)
 # =========================================================================== #
 def xception_keras_arg_scope(hdf5_file, weight_decay=0.00001):
-    """Defines an Xception arg scope which loads layers weights from a Keras
-    HDF5 file.
+    """Defines an Xception arg scope which initialize layers weights
+    using a Keras HDF5 file.
+
+    Quite hacky implementaion, but seems to be working!
 
     Args:
+      hdf5_file: HDF5 file handle.
       weight_decay: The weight decay to use for regularizing the model.
 
     Returns:
       An `arg_scope` to use for the xception model.
     """
-    # Default batch norm parameters.
+    # Default batch normalization parameters.
     batch_norm_params = {
-      'decay': 0.9997,
-      'epsilon': 0.001,
-      'updates_collections': tf.GraphKeys.UPDATE_OPS,
+        'center': True,
+        'scale': False,
+        'decay': 0.9997,
+        'epsilon': 0.001,
+        'updates_collections': tf.GraphKeys.UPDATE_OPS,
     }
 
-    # Batch norm parameters from HDF5 file.
-    def bn_params():
-        bn_params.idx += 1
-    bn_params.idx = 0
+    # Read weights from HDF5 file.
+    def keras_bn_params():
+        def _beta_initializer(shape, dtype, partition_info=None):
+            keras_bn_params.bidx += 1
+            k = 'batchnormalization_%i' % keras_bn_params.bidx
+            kb = 'batchnormalization_%i_beta:0' % keras_bn_params.bidx
+            return tf.cast(hdf5_file[k][kb][:], dtype)
 
-    # Conv2d weights from HDF5 file.
-    def conv2d_weights():
-        conv2d_weights.idx += 1
-    conv2d_weights.idx = 0
+        def _gamma_initializer(shape, dtype, partition_info=None):
+            keras_bn_params.gidx += 1
+            k = 'batchnormalization_%i' % keras_bn_params.gidx
+            kg = 'batchnormalization_%i_gamma:0' % keras_bn_params.gidx
+            return tf.cast(hdf5_file[k][kg][:], dtype)
 
-    # Separable conv2d weights from HDF5 file.
-    def sepconv2d_weights():
-        sepconv2d_weights.idx += 1
-    sepconv2d_weights.idx = 0
+        def _mean_initializer(shape, dtype, partition_info=None):
+            keras_bn_params.midx += 1
+            k = 'batchnormalization_%i' % keras_bn_params.midx
+            km = 'batchnormalization_%i_running_mean:0' % keras_bn_params.midx
+            return tf.cast(hdf5_file[k][km][:], dtype)
 
-    # Set weight_decay for weights in Conv and FC layers.
+        def _variance_initializer(shape, dtype, partition_info=None):
+            keras_bn_params.vidx += 1
+            k = 'batchnormalization_%i' % keras_bn_params.vidx
+            kv = 'batchnormalization_%i_running_std:0' % keras_bn_params.vidx
+            return tf.cast(hdf5_file[k][kv][:], dtype)
+
+        # Batch normalisation initializers.
+        params = batch_norm_params.copy()
+        params['initializers'] = {
+            'beta': _beta_initializer,
+            'gamma': _gamma_initializer,
+            'moving_mean': _mean_initializer,
+            'moving_variance': _variance_initializer,
+        }
+        return params
+    keras_bn_params.bidx = 0
+    keras_bn_params.gidx = 0
+    keras_bn_params.midx = 0
+    keras_bn_params.vidx = 0
+
+    def keras_conv2d_weights():
+        def _initializer(shape, dtype, partition_info=None):
+            keras_conv2d_weights.idx += 1
+            k = 'convolution2d_%i' % keras_conv2d_weights.idx
+            kw = 'convolution2d_%i_W:0' % keras_conv2d_weights.idx
+            return tf.cast(hdf5_file[k][kw][:], dtype)
+        return _initializer
+    keras_conv2d_weights.idx = 0
+
+    def keras_sep_conv2d_weights():
+        def _initializer(shape, dtype, partition_info=None):
+            # Depthwise or Pointwise convolution?
+            if shape[0] > 1 or shape[1] > 1:
+                keras_sep_conv2d_weights.didx += 1
+                k = 'separableconvolution2d_%i' % keras_sep_conv2d_weights.didx
+                kd = 'separableconvolution2d_%i_depthwise_kernel:0' % keras_sep_conv2d_weights.didx
+                weights = hdf5_file[k][kd][:]
+            else:
+                keras_sep_conv2d_weights.pidx += 1
+                k = 'separableconvolution2d_%i' % keras_sep_conv2d_weights.pidx
+                kp = 'separableconvolution2d_%i_pointwise_kernel:0' % keras_sep_conv2d_weights.pidx
+                weights = hdf5_file[k][kp][:]
+            return tf.cast(weights, dtype)
+        return _initializer
+    keras_sep_conv2d_weights.didx = 0
+    keras_sep_conv2d_weights.pidx = 0
+
+    def keras_dense_weights():
+        def _initializer(shape, dtype, partition_info=None):
+            keras_dense_weights.idx += 1
+            k = 'dense_%i' % keras_dense_weights.idx
+            kw = 'dense_%i_W:0' % keras_dense_weights.idx
+            return tf.cast(hdf5_file[k][kw][:], dtype)
+        return _initializer
+    keras_dense_weights.idx = 1
+
+    def keras_dense_biases():
+        def _initializer(shape, dtype, partition_info=None):
+            keras_dense_biases.idx += 1
+            k = 'dense_%i' % keras_dense_biases.idx
+            kb = 'dense_%i_b:0' % keras_dense_biases.idx
+            return tf.cast(hdf5_file[k][kb][:], dtype)
+        return _initializer
+    keras_dense_biases.idx = 1
+
+    # Default network arg scope.
     with slim.arg_scope([slim.conv2d, slim.fully_connected, slim.separable_convolution2d],
                         weights_regularizer=slim.l2_regularizer(weight_decay)):
         with slim.arg_scope(
-            [slim.conv2d, slim.separable_convolution2d],
-            padding='SAME',
-            activation_fn=tf.nn.relu,
-            normalizer_fn=slim.batch_norm,
-            normalizer_params=batch_norm_params) as sc:
-                return sc
+                [slim.conv2d, slim.separable_convolution2d],
+                padding='SAME',
+                activation_fn=tf.nn.relu,
+                normalizer_fn=slim.batch_norm,
+                normalizer_params=keras_bn_params()):
+            with slim.arg_scope([slim.max_pool2d], padding='SAME'):
+
+                # Weights initializers from Keras weights.
+                with slim.arg_scope([slim.conv2d],
+                                    weights_initializer=keras_conv2d_weights()):
+                    with slim.arg_scope([slim.separable_convolution2d],
+                                        weights_initializer=keras_sep_conv2d_weights()):
+                        with slim.arg_scope([slim.fully_connected],
+                                            weights_initializer=keras_dense_weights(),
+                                            biases_initializer=keras_dense_biases()) as sc:
+                            return sc
 
 
 def xception_keras(inputs,
-                   hdf5_file=None,
                    num_classes=1000,
                    is_training=True,
+                   hdf5_file=None,
                    dropout_keep_prob=0.5,
                    prediction_fn=slim.softmax,
                    reuse=None,
@@ -223,88 +306,98 @@ def xception_keras(inputs,
 
     # Read weights from HDF5 file.
     def bn_params():
-        bn_params.idx += 1
-        params = batch_norm_params.copy()
+        def _beta_initializer(shape, dtype, partition_info=None):
+            bn_params.bidx += 1
+            k = 'batchnormalization_%i' % bn_params.bidx
+            kb = 'batchnormalization_%i_beta:0' % bn_params.bidx
+            return tf.cast(hdf5_file[k][kb][:], dtype)
 
-        # Batch norm. parameters.
-        k = 'batchnormalization_%i' % bn_params.idx
-        kb = 'batchnormalization_%i_gamma' % bn_params.idx
-        km = 'batchnormalization_%i_running_mean' % bn_params.idx
-        kv = 'batchnormalization_%i_running_std' % bn_params.idx
-        param['param_initializers'] = {
-            'beta': hdf5_file[k][kb][:],
-            'moving_mean': hdf5_file[k][km][:],
-            'moving_variance': hdf5_file[k][kv][:],
+        def _gamma_initializer(shape, dtype, partition_info=None):
+            bn_params.gidx += 1
+            k = 'batchnormalization_%i' % bn_params.gidx
+            kg = 'batchnormalization_%i_gamma:0' % bn_params.gidx
+            return tf.cast(hdf5_file[k][kg][:], dtype)
+
+        def _mean_initializer(shape, dtype, partition_info=None):
+            bn_params.midx += 1
+            k = 'batchnormalization_%i' % bn_params.midx
+            km = 'batchnormalization_%i_running_mean:0' % bn_params.midx
+            return tf.cast(hdf5_file[k][km][:], dtype)
+
+        def _variance_initializer(shape, dtype, partition_info=None):
+            bn_params.vidx += 1
+            k = 'batchnormalization_%i' % bn_params.vidx
+            kv = 'batchnormalization_%i_running_std:0' % bn_params.vidx
+            return tf.cast(hdf5_file[k][kv][:], dtype)
+
+        # Batch normalisation initializers.
+        params = batch_norm_params.copy()
+        params['initializers'] = {
+            'beta': _beta_initializer,
+            'gamma': _gamma_initializer,
+            'moving_mean': _mean_initializer,
+            'moving_variance': _variance_initializer,
         }
         return params
-    bn_params.idx = 0
+    bn_params.bidx = 0
+    bn_params.gidx = 0
+    bn_params.midx = 0
+    bn_params.vidx = 0
 
-    def conv2d_weights():
-        init = tf.contrib.layers.variance_scaling_initializer()
-
+    def keras_conv2d_weights():
         def _initializer(shape, dtype, partition_info=None):
-            conv2d_weights.idx += 1
-            print('Conv2d:', shape)
-            k = 'convolution2d_%i' % conv2d_weights.idx
-            kw = 'convolution2d_%i_W' % conv2d_weights.idx
-            weights = hdf5_file[k][kw][:]
-            print('Conv2d keras:', weights.shape)
-            return weights.astype(dtype)
-            # return init(shape, dtype, partition_info)
-    conv2d_weights.idx = 0
+            keras_conv2d_weights.idx += 1
+            k = 'convolution2d_%i' % keras_conv2d_weights.idx
+            kw = 'convolution2d_%i_W:0' % keras_conv2d_weights.idx
+            return tf.cast(hdf5_file[k][kw][:], dtype)
+        return _initializer
+    keras_conv2d_weights.idx = 0
 
-    def sepconv2d_weights():
-        init = tf.contrib.layers.variance_scaling_initializer()
-
+    def keras_sep_conv2d_weights():
         def _initializer(shape, dtype, partition_info=None):
-            sepconv2d_weights.idx += 1
-            print('SepConv2d:', shape)
-            k = 'separableconvolution2d_%i' % sepconv2d_weights.idx
-            kd = 'separableconvolution2d_%i_depthwise_kernel' % sepconv2d_weights.idx
-            kp = 'separableconvolution2d_%i_pointwise_kernel' % sepconv2d_weights.idx
-            weights = hdf5_file[k][kd][:]
-            weights = hdf5_file[k][kp][:]
-            print('SepConv2d keras:', weights.shape)
-            return weights.astype(dtype)
-            # return init(shape, dtype, partition_info)
-    sepconv2d_weights.idx = 0
-    sepconv2d_weights.subidx = 0
+            # Depthwise or Pointwise convolution?
+            if shape[0] > 1 or shape[1] > 1:
+                keras_sep_conv2d_weights.didx += 1
+                k = 'separableconvolution2d_%i' % keras_sep_conv2d_weights.didx
+                kd = 'separableconvolution2d_%i_depthwise_kernel:0' % keras_sep_conv2d_weights.didx
+                weights = hdf5_file[k][kd][:]
+            else:
+                keras_sep_conv2d_weights.pidx += 1
+                k = 'separableconvolution2d_%i' % keras_sep_conv2d_weights.pidx
+                kp = 'separableconvolution2d_%i_pointwise_kernel:0' % keras_sep_conv2d_weights.pidx
+                weights = hdf5_file[k][kp][:]
+            return tf.cast(weights, dtype)
+        return _initializer
+    keras_sep_conv2d_weights.didx = 0
+    keras_sep_conv2d_weights.pidx = 0
 
-    def dense_weights():
-        init = tf.contrib.layers.variance_scaling_initializer()
-
+    def keras_dense_weights():
         def _initializer(shape, dtype, partition_info=None):
-            dense_weights.idx += 1
-            print('Dense:', shape)
-            k = 'dense_%i' % dense_weights.idx
-            kw = 'dense_%i_W' % dense_weights.idx
-            weights = hdf5_file[k][kw][:]
-            return weights.astype(dtype)
-            # return init(shape, dtype, partition_info)
-    dense_weights.idx = 1
+            keras_dense_weights.idx += 1
+            k = 'dense_%i' % keras_dense_weights.idx
+            kw = 'dense_%i_W:0' % keras_dense_weights.idx
+            return tf.cast(hdf5_file[k][kw][:], dtype)
+        return _initializer
+    keras_dense_weights.idx = 1
 
-    def dense_biases():
-        init = tf.contrib.layers.variance_scaling_initializer()
-
+    def keras_dense_biases():
         def _initializer(shape, dtype, partition_info=None):
-            dense_biases.idx += 1
-            print('Dense:', shape)
-            k = 'dense_%i' % dense_biases.idx
-            kb = 'dense_%i_b' % dense_biases.idx
-            biases = hdf5_file[k][kb][:]
-            return biases.astype(dtype)
-            # return init(shape, dtype, partition_info)
-    dense_biases.idx = 1
+            keras_dense_biases.idx += 1
+            k = 'dense_%i' % keras_dense_biases.idx
+            kb = 'dense_%i_b:0' % keras_dense_biases.idx
+            return tf.cast(hdf5_file[k][kb][:], dtype)
+        return _initializer
+    keras_dense_biases.idx = 1
 
     with tf.variable_scope(scope, 'xception', [inputs]):
         # Block 1.
         end_point = 'block1'
         with tf.variable_scope(end_point):
             net = slim.conv2d(inputs, 32, [3, 3], padding='VALID', scope='conv1',
-                              weights_initializer=conv2d_weights(),
+                              weights_initializer=keras_conv2d_weights(),
                               normalizer_params=bn_params())
             net = slim.conv2d(net, 64, [3, 3], padding='VALID', scope='conv2',
-                              weights_initializer=conv2d_weights(),
+                              weights_initializer=keras_conv2d_weights(),
                               normalizer_params=bn_params())
         end_points[end_point] = net
 
@@ -312,13 +405,13 @@ def xception_keras(inputs,
         end_point = 'block2'
         with tf.variable_scope(end_point):
             res = slim.conv2d(net, 128, [1, 1], stride=2, activation_fn=None, scope='res',
-                              weights_initializer=conv2d_weights(),
+                              weights_initializer=keras_conv2d_weights(),
                               normalizer_params=bn_params())
             net = slim.separable_convolution2d(net, 128, [3, 3], 1, scope='sepconv1',
-                                               weights_initializer=sepconv2d_weights(),
+                                               weights_initializer=keras_sep_conv2d_weights(),
                                                normalizer_params=bn_params())
             net = slim.separable_convolution2d(net, 128, [3, 3], 1, activation_fn=None, scope='sepconv2',
-                                               weights_initializer=sepconv2d_weights(),
+                                               weights_initializer=keras_sep_conv2d_weights(),
                                                normalizer_params=bn_params())
             net = slim.max_pool2d(net, [3, 3], stride=2, scope='pool')
             net = res + net
@@ -328,14 +421,14 @@ def xception_keras(inputs,
         end_point = 'block3'
         with tf.variable_scope(end_point):
             res = slim.conv2d(net, 256, [1, 1], stride=2, activation_fn=None, scope='res',
-                              weights_initializer=conv2d_weights(),
+                              weights_initializer=keras_conv2d_weights(),
                               normalizer_params=bn_params())
             net = tf.nn.relu(net)
             net = slim.separable_convolution2d(net, 256, [3, 3], 1, scope='sepconv1',
-                                               weights_initializer=sepconv2d_weights(),
+                                               weights_initializer=keras_sep_conv2d_weights(),
                                                normalizer_params=bn_params())
             net = slim.separable_convolution2d(net, 256, [3, 3], 1, activation_fn=None, scope='sepconv2',
-                                               weights_initializer=sepconv2d_weights(),
+                                               weights_initializer=keras_sep_conv2d_weights(),
                                                normalizer_params=bn_params())
             net = slim.max_pool2d(net, [3, 3], stride=2, scope='pool')
             net = res + net
@@ -345,14 +438,14 @@ def xception_keras(inputs,
         end_point = 'block4'
         with tf.variable_scope(end_point):
             res = slim.conv2d(net, 728, [1, 1], stride=2, activation_fn=None, scope='res',
-                              weights_initializer=conv2d_weights(),
+                              weights_initializer=keras_conv2d_weights(),
                               normalizer_params=bn_params())
             net = tf.nn.relu(net)
             net = slim.separable_convolution2d(net, 728, [3, 3], 1, scope='sepconv1',
-                                               weights_initializer=sepconv2d_weights(),
+                                               weights_initializer=keras_sep_conv2d_weights(),
                                                normalizer_params=bn_params())
             net = slim.separable_convolution2d(net, 728, [3, 3], 1, activation_fn=None, scope='sepconv2',
-                                               weights_initializer=sepconv2d_weights(),
+                                               weights_initializer=keras_sep_conv2d_weights(),
                                                normalizer_params=bn_params())
             net = slim.max_pool2d(net, [3, 3], stride=2, scope='pool')
             net = res + net
@@ -366,17 +459,17 @@ def xception_keras(inputs,
                 net = tf.nn.relu(net)
                 net = slim.separable_convolution2d(net, 728, [3, 3], 1, activation_fn=None,
                                                    scope='sepconv1',
-                                                   weights_initializer=sepconv2d_weights(),
+                                                   weights_initializer=keras_sep_conv2d_weights(),
                                                    normalizer_params=bn_params())
                 net = tf.nn.relu(net)
                 net = slim.separable_convolution2d(net, 728, [3, 3], 1, activation_fn=None,
                                                    scope='sepconv2',
-                                                   weights_initializer=sepconv2d_weights(),
+                                                   weights_initializer=keras_sep_conv2d_weights(),
                                                    normalizer_params=bn_params())
                 net = tf.nn.relu(net)
                 net = slim.separable_convolution2d(net, 728, [3, 3], 1, activation_fn=None,
                                                    scope='sepconv3',
-                                                   weights_initializer=sepconv2d_weights(),
+                                                   weights_initializer=keras_sep_conv2d_weights(),
                                                    normalizer_params=bn_params())
                 net = res + net
             end_points[end_point] = net
@@ -385,15 +478,15 @@ def xception_keras(inputs,
         end_point = 'block13'
         with tf.variable_scope(end_point):
             res = slim.conv2d(net, 1024, [1, 1], stride=2, activation_fn=None, scope='res',
-                              weights_initializer=conv2d_weights(),
+                              weights_initializer=keras_conv2d_weights(),
                               normalizer_params=bn_params())
             net = tf.nn.relu(net)
             net = slim.separable_convolution2d(net, 728, [3, 3], 1, activation_fn=None, scope='sepconv1',
-                                               weights_initializer=sepconv2d_weights(),
+                                               weights_initializer=keras_sep_conv2d_weights(),
                                                normalizer_params=bn_params())
             net = tf.nn.relu(net)
             net = slim.separable_convolution2d(net, 1024, [3, 3], 1, activation_fn=None, scope='sepconv2',
-                                               weights_initializer=sepconv2d_weights(),
+                                               weights_initializer=keras_sep_conv2d_weights(),
                                                normalizer_params=bn_params())
             net = slim.max_pool2d(net, [3, 3], stride=2, scope='pool')
             net = res + net
@@ -402,10 +495,10 @@ def xception_keras(inputs,
         end_point = 'block14'
         with tf.variable_scope(end_point):
             net = slim.separable_convolution2d(net, 1536, [3, 3], 1, scope='sepconv1',
-                                               weights_initializer=sepconv2d_weights(),
+                                               weights_initializer=keras_sep_conv2d_weights(),
                                                normalizer_params=bn_params())
             net = slim.separable_convolution2d(net, 2048, [3, 3], 1, scope='sepconv2',
-                                               weights_initializer=sepconv2d_weights(),
+                                               weights_initializer=keras_sep_conv2d_weights(),
                                                normalizer_params=bn_params())
         end_points[end_point] = net
 
@@ -414,8 +507,8 @@ def xception_keras(inputs,
         with tf.variable_scope(end_point):
             net = tf.reduce_mean(net, [1, 2], name='reduce_avg')
             logits = slim.fully_connected(net, 1000, activation_fn=None,
-                                          weights_initializer=dense_weights(),
-                                          biases_initializer=dense_biases())
+                                          weights_initializer=keras_dense_weights(),
+                                          biases_initializer=keras_dense_biases())
             end_points['logits'] = logits
             end_points['predictions'] = prediction_fn(logits, scope='Predictions')
 

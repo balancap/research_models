@@ -50,6 +50,7 @@ def get_preprocessing(name, is_training=False):
         'atrousnet_same': gtsrb_32_preprocessing,
         'atrousnet_valid': gtsrb_32_preprocessing,
         'xception': inception_preprocessing,
+        'xception_keras': inception_preprocessing,
         'vgg': vgg_preprocessing,
         'vgg_a': vgg_preprocessing,
         'vgg_16': vgg_preprocessing,

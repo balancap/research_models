@@ -126,7 +126,7 @@ python train_image_classifier.py \
     --dataset_dir=${DATASET_DIR} \
     --dataset_name=imagenet \
     --dataset_split_name=train \
-    --model_name=xception \
+    --model_name=xception_keras \
     --labels_offset=1 \
     --checkpoint_path=${CHECKPOINT_PATH} \
     --save_summaries_secs=60 \
@@ -134,7 +134,7 @@ python train_image_classifier.py \
     --weight_decay=0.00001 \
     --optimizer=rmsprop \
     --learning_rate=0.00005 \
-    --batch_size=4
+    --batch_size=1
 
 python train_image_classifier.py \
     --train_dir=${TRAIN_DIR} \
@@ -162,6 +162,14 @@ python eval_image_classifier.py \
     --dataset_name=imagenet \
     --dataset_split_name=validation \
     --model_name=xception
+
+
+CHECKPOINT_PATH=./checkpoints/xception_weights_tf_dim_ordering_tf_kernels.h5
+python ckpt_keras_to_tensorflow.py \
+    --model_name=xception_keras \
+    --num_classes=1000 \
+    --checkpoint_path=${CHECKPOINT_PATH}
+
 
 # ===========================================================================
 # Inception v3

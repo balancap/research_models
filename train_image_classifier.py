@@ -258,7 +258,9 @@ def _get_init_fn():
     Returns:
       An init function run by the supervisor.
     """
-    if FLAGS.checkpoint_path is None:
+    # Assume .h5 == Keras checkpoint.
+    print(FLAGS.checkpoint_path)
+    if FLAGS.checkpoint_path is None or FLAGS.checkpoint_path[-3:] != '.h5':
         return None
 
     # Warn the user if a checkpoint exists in the train_dir. Then we'll be
@@ -322,7 +324,7 @@ def main(_):
     if not FLAGS.dataset_dir:
         raise ValueError('You must supply the dataset directory with --dataset_dir')
 
-    tf.logging.set_verbosity(tf.logging.INFO)
+    tf.logging.set_verbosity(tf.logging.DEBUG)
     with tf.Graph().as_default():
         # Config model_deploy#
         deploy_config = model_deploy.DeploymentConfig(
