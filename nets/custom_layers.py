@@ -22,6 +22,7 @@ from tensorflow.python.ops import math_ops
 from tensorflow.python.ops import nn
 from tensorflow.python.ops import standard_ops
 from tensorflow.python.ops import variable_scope
+from tensorflow.python.ops import control_flow_ops
 from tensorflow.python.training import moving_averages
 
 slim = tf.contrib.slim
@@ -31,7 +32,7 @@ slim = tf.contrib.slim
 # Separable convolution 2d with difference padding.
 # =========================================================================== #
 @add_arg_scope
-def separable_convolution2d(
+def separable_convolution2d_diffpad(
         inputs,
         num_outputs,
         kernel_size,
@@ -94,6 +95,10 @@ def separable_convolution2d(
     """
     with variable_scope.variable_scope(
             scope, 'SeparableConv2d', [inputs], reuse=reuse) as sc:
+        # TOFIX: Hard set padding and multiplier...
+        padding = 'SAME'
+        depth_multiplier = 1
+
         dtype = inputs.dtype.base_dtype
         kernel_h, kernel_w = utils.two_element_tuple(kernel_size)
         stride_h, stride_w = utils.two_element_tuple(stride)
@@ -102,7 +107,7 @@ def separable_convolution2d(
                 variables_collections, 'weights')
 
         depthwise_shape = [kernel_h, kernel_w,
-                                             num_filters_in, depth_multiplier]
+                           num_filters_in, depth_multiplier]
         depthwise_weights = variables.model_variable(
                 'depthwise_weights',
                 shape=depthwise_shape,
@@ -112,10 +117,55 @@ def separable_convolution2d(
                 trainable=trainable,
                 collections=weights_collections)
         strides = [1, stride_h, stride_w, 1]
+
+        # Classic depthwise_conv2d with SAME padding (i.e. zero padding).
+        outputs = nn.depthwise_conv2d(inputs, depthwise_weights, strides, padding)
+
+        # Fix padding according too the difference rule. Dirty shit!
+        diff_padding = variables.local_variable(tf.zeros_like(outputs))
+
+        # Bottom and top fixing...
+        # print(diff_padding[:, 0, :, :].get_shape())
+        # print(depthwise_weights[0, 0, :, 0].get_shape())
+        op1 = diff_padding[:, 0, :, :].assign(
+            outputs[:, 0, :, :] * (depthwise_weights[0, 0, :, 0] +
+                                   depthwise_weights[0, 1, :, 0] +
+                                   depthwise_weights[0, 2, :, 0]))
+        op2 = diff_padding[:, -1, :, :].assign(
+            outputs[:, -1, :, :] * (depthwise_weights[-1, 0, :, 0] +
+                                    depthwise_weights[-1, 1, :, 0] +
+                                    depthwise_weights[-1, 2, :, 0]))
+        # Bottom and top fixing...
+        op3 = diff_padding[:, :, 0, :].assign(
+            outputs[:, :, 0, :] * (depthwise_weights[0, 0, :, 0] +
+                                   depthwise_weights[1, 0, :, 0] +
+                                   depthwise_weights[2, 0, :, 0]))
+        op4 = diff_padding[:, :, -1, :].assign(
+            outputs[:, :, -1, :] * (depthwise_weights[0, -1, :, 0] +
+                                    depthwise_weights[1, -1, :, 0] +
+                                    depthwise_weights[2, -1, :, 0]))
+        diff_padding1 = control_flow_ops.with_dependencies([op1, op2, op3, op4],
+                                                           diff_padding)
+
+        # Fix double addition in corners.
+        op5 = diff_padding[:, 0, 0, :].assign(
+            diff_padding1[:, 0, 0, :] - outputs[:, 0, 0, :] * depthwise_weights[0, 0, :, 0])
+        op6 = diff_padding[:, -1, 0, :].assign(
+            diff_padding1[:, -1, 0, :] - outputs[:, -1, 0, :] * depthwise_weights[-1, 0, :, 0])
+        op7 = diff_padding[:, 0, -1, :].assign(
+            diff_padding1[:, 0, -1, :] - outputs[:, 0, -1, :] * depthwise_weights[0, -1, :, 0])
+        op8 = diff_padding[:, -1, -1, :].assign(
+            diff_padding1[:, -1, -1, :] - outputs[:, -1, -1, :] * depthwise_weights[-1, -1, :, 0])
+        diff_padding2 = control_flow_ops.with_dependencies([op5, op6, op7, op8],
+                                                           diff_padding)
+
+        # Update padding!
+        outputs = outputs + diff_padding2
+
+        # Adding pointwise convolution.
         if num_outputs is not None:
             # Full separable convolution: Depthwise followed by pointwise convolution.
-            pointwise_shape = [1, 1, depth_multiplier * num_filters_in,
-                                                 num_outputs]
+            pointwise_shape = [1, 1, depth_multiplier * num_filters_in, num_outputs]
             pointwise_weights = variables.model_variable(
                     'pointwise_weights',
                     shape=pointwise_shape,
@@ -124,14 +174,12 @@ def separable_convolution2d(
                     regularizer=weights_regularizer,
                     trainable=trainable,
                     collections=weights_collections)
-            outputs = nn.separable_conv2d(inputs,
-                                          depthwise_weights,
-                                          pointwise_weights,
-                                          strides,
-                                          padding)
+
+            outputs = nn.conv2d(outputs, pointwise_weights,
+                                strides=(1, 1, 1, 1), padding='SAME')
+
         else:
             # Depthwise convolution only.
-            outputs = nn.depthwise_conv2d(inputs, depthwise_weights, strides, padding)
             num_outputs = depth_multiplier * num_filters_in
 
         if normalizer_fn is not None:

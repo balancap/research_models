@@ -49,14 +49,15 @@ def get_preprocessing(name, is_training=False):
         'atrousnet': gtsrb_32_preprocessing,
         'atrousnet_same': gtsrb_32_preprocessing,
         'atrousnet_valid': gtsrb_32_preprocessing,
-        'xception': inception_preprocessing,
-        'xception_keras': inception_preprocessing,
         'vgg': vgg_preprocessing,
         'vgg_a': vgg_preprocessing,
         'vgg_16': vgg_preprocessing,
         'vgg_19': vgg_preprocessing,
         'inception_v3': inception_preprocessing,
         'inception_resnet_v2': inception_preprocessing,
+        'xception': inception_preprocessing,
+        'xception_keras': inception_preprocessing,
+        'dception': inception_preprocessing,
       }
 
     if name not in preprocessing_fn_map:
