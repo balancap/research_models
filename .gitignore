@@ -8,3 +8,4 @@ deployment/__pycache__/
 logs/
 nets/__pycache__/
 preprocessing/__pycache__/
+checkpoints/checkpoint

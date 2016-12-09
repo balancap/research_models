@@ -36,6 +36,8 @@ def main(_):
 
     tf.logging.set_verbosity(tf.logging.INFO)
     with tf.Graph().as_default():
+        global_step = slim.create_global_step()
+
         # Select the network.
         kwargs = {
             'hdf5_file': hdf5_keras,

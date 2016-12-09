@@ -33,7 +33,7 @@ def xception(inputs,
         # Block 1.
         end_point = 'block1'
         with tf.variable_scope(end_point):
-            net = slim.conv2d(inputs, 32, [3, 3], padding='VALID', scope='conv1')
+            net = slim.conv2d(inputs, 32, [3, 3], stride=2, padding='VALID', scope='conv1')
             net = slim.conv2d(net, 64, [3, 3], padding='VALID', scope='conv2')
         end_points[end_point] = net
 
