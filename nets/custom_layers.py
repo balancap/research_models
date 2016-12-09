@@ -122,15 +122,15 @@ def separable_convolution2d_diffpad(
         outputs = nn.depthwise_conv2d(inputs, depthwise_weights, strides, padding)
 
         # Fix padding according too the difference rule. Dirty shit!
-        # diff_padding = variables.local_variable(tf.zeros_like(outputs))
+        # diff_padding = variables.local_variable(outputs)
         diff_padding = variables.variable(
             'diff_padding',
             shape=outputs.get_shape(),
             dtype=dtype,
-            initializer=tf.constant_initializer(),
+            initializer=tf.constant_initializer(0.0),
             regularizer=None,
             trainable=False,
-            collections=weights_collections)
+            collections=[ops.GraphKeys.LOCAL_VARIABLES])
 
         # Bottom and top fixing...
         # print(diff_padding[:, 0, :, :].get_shape())
