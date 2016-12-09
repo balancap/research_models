@@ -45,7 +45,7 @@ def dception(inputs,
         with tf.variable_scope(end_point):
             res = slim.conv2d(net, 128, [1, 1], stride=2, activation_fn=None, scope='res')
             net = separable_convolution2d_diffpad(net, 128, [3, 3], 1, scope='sepconv1')
-            net = slim.separable_convolution2d(net, 128, [3, 3], 1, activation_fn=None, scope='sepconv2')
+            net = separable_convolution2d_diffpad(net, 128, [3, 3], 1, activation_fn=None, scope='sepconv2')
             net = slim.max_pool2d(net, [3, 3], stride=2, scope='pool')
             net = res + net
         end_points[end_point] = net
@@ -55,8 +55,8 @@ def dception(inputs,
         with tf.variable_scope(end_point):
             res = slim.conv2d(net, 256, [1, 1], stride=2, activation_fn=None, scope='res')
             net = tf.nn.relu(net)
-            net = slim.separable_convolution2d(net, 256, [3, 3], 1, scope='sepconv1')
-            net = slim.separable_convolution2d(net, 256, [3, 3], 1, activation_fn=None, scope='sepconv2')
+            net = separable_convolution2d_diffpad(net, 256, [3, 3], 1, scope='sepconv1')
+            net = separable_convolution2d_diffpad(net, 256, [3, 3], 1, activation_fn=None, scope='sepconv2')
             net = slim.max_pool2d(net, [3, 3], stride=2, scope='pool')
             net = res + net
         end_points[end_point] = net
@@ -66,8 +66,8 @@ def dception(inputs,
         with tf.variable_scope(end_point):
             res = slim.conv2d(net, 728, [1, 1], stride=2, activation_fn=None, scope='res')
             net = tf.nn.relu(net)
-            net = slim.separable_convolution2d(net, 728, [3, 3], 1, scope='sepconv1')
-            net = slim.separable_convolution2d(net, 728, [3, 3], 1, activation_fn=None, scope='sepconv2')
+            net = separable_convolution2d_diffpad(net, 728, [3, 3], 1, scope='sepconv1')
+            net = separable_convolution2d_diffpad(net, 728, [3, 3], 1, activation_fn=None, scope='sepconv2')
             net = slim.max_pool2d(net, [3, 3], stride=2, scope='pool')
             net = res + net
         end_points[end_point] = net
@@ -78,13 +78,13 @@ def dception(inputs,
             with tf.variable_scope(end_point):
                 res = net
                 net = tf.nn.relu(net)
-                net = slim.separable_convolution2d(net, 728, [3, 3], 1, activation_fn=None,
+                net = separable_convolution2d_diffpad(net, 728, [3, 3], 1, activation_fn=None,
                                                    scope='sepconv1')
                 net = tf.nn.relu(net)
-                net = slim.separable_convolution2d(net, 728, [3, 3], 1, activation_fn=None,
+                net = separable_convolution2d_diffpad(net, 728, [3, 3], 1, activation_fn=None,
                                                    scope='sepconv2')
                 net = tf.nn.relu(net)
-                net = slim.separable_convolution2d(net, 728, [3, 3], 1, activation_fn=None,
+                net = separable_convolution2d_diffpad(net, 728, [3, 3], 1, activation_fn=None,
                                                    scope='sepconv3')
                 net = res + net
             end_points[end_point] = net
@@ -94,17 +94,17 @@ def dception(inputs,
         with tf.variable_scope(end_point):
             res = slim.conv2d(net, 1024, [1, 1], stride=2, activation_fn=None, scope='res')
             net = tf.nn.relu(net)
-            net = slim.separable_convolution2d(net, 728, [3, 3], 1, activation_fn=None, scope='sepconv1')
+            net = separable_convolution2d_diffpad(net, 728, [3, 3], 1, activation_fn=None, scope='sepconv1')
             net = tf.nn.relu(net)
-            net = slim.separable_convolution2d(net, 1024, [3, 3], 1, activation_fn=None, scope='sepconv2')
+            net = separable_convolution2d_diffpad(net, 1024, [3, 3], 1, activation_fn=None, scope='sepconv2')
             net = slim.max_pool2d(net, [3, 3], stride=2, scope='pool')
             net = res + net
         end_points[end_point] = net
 
         end_point = 'block14'
         with tf.variable_scope(end_point):
-            net = slim.separable_convolution2d(net, 1536, [3, 3], 1, scope='sepconv1')
-            net = slim.separable_convolution2d(net, 2048, [3, 3], 1, scope='sepconv2')
+            net = separable_convolution2d_diffpad(net, 1536, [3, 3], 1, scope='sepconv1')
+            net = separable_convolution2d_diffpad(net, 2048, [3, 3], 1, scope='sepconv2')
         end_points[end_point] = net
 
         # Global averaging.
@@ -141,11 +141,11 @@ def dception_arg_scope(weight_decay=0.00001, stddev=0.1):
 
     # Set weight_decay for weights in Conv and FC layers.
     with slim.arg_scope([slim.conv2d, slim.fully_connected,
-                        slim.separable_convolution2d, separable_convolution2d_diffpad],
+                        separable_convolution2d_diffpad, separable_convolution2d_diffpad],
                         weights_regularizer=slim.l2_regularizer(weight_decay)):
         with slim.arg_scope(
                 [slim.conv2d,
-                 slim.separable_convolution2d,
+                 separable_convolution2d_diffpad,
                  separable_convolution2d_diffpad],
                 padding='SAME',
                 weights_initializer=tf.contrib.layers.variance_scaling_initializer(factor=2.0, mode='FAN_IN', uniform=False),
@@ -267,10 +267,10 @@ def dception_keras_arg_scope(hdf5_file, weight_decay=0.00001):
     keras_dense_biases.idx = 1
 
     # Default network arg scope.
-    with slim.arg_scope([slim.conv2d, slim.fully_connected, slim.separable_convolution2d],
+    with slim.arg_scope([slim.conv2d, slim.fully_connected, separable_convolution2d_diffpad],
                         weights_regularizer=slim.l2_regularizer(weight_decay)):
         with slim.arg_scope(
-                [slim.conv2d, slim.separable_convolution2d],
+                [slim.conv2d, separable_convolution2d_diffpad],
                 padding='SAME',
                 activation_fn=tf.nn.relu,
                 normalizer_fn=slim.batch_norm,
@@ -280,7 +280,7 @@ def dception_keras_arg_scope(hdf5_file, weight_decay=0.00001):
                 # Weights initializers from Keras weights.
                 with slim.arg_scope([slim.conv2d],
                                     weights_initializer=keras_conv2d_weights()):
-                    with slim.arg_scope([slim.separable_convolution2d],
+                    with slim.arg_scope([separable_convolution2d_diffpad],
                                         weights_initializer=keras_sep_conv2d_weights()):
                         with slim.arg_scope([slim.fully_connected],
                                             weights_initializer=keras_dense_weights(),
