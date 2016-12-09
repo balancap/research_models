@@ -234,7 +234,7 @@ python train_image_classifier.py \
     --dataset_dir=${DATASET_DIR} \
     --dataset_name=imagenet \
     --dataset_split_name=train \
-    --model_name=xception \
+    --model_name=dception \
     --labels_offset=1 \
     --save_summaries_secs=60 \
     --save_interval_secs=60 \

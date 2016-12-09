@@ -94,7 +94,7 @@ def separable_convolution2d_diffpad(
         A `Tensor` representing the output of the operation.
     """
     with variable_scope.variable_scope(
-            scope, 'SeparableConv2d', [inputs], reuse=reuse) as sc:
+            scope, 'SeparableConv2dPad', [inputs], reuse=reuse) as sc:
         # TOFIX: Hard set padding and multiplier...
         padding = 'SAME'
         depth_multiplier = 1
@@ -122,7 +122,15 @@ def separable_convolution2d_diffpad(
         outputs = nn.depthwise_conv2d(inputs, depthwise_weights, strides, padding)
 
         # Fix padding according too the difference rule. Dirty shit!
-        diff_padding = variables.local_variable(tf.zeros_like(outputs))
+        # diff_padding = variables.local_variable(tf.zeros_like(outputs))
+        diff_padding = variables.variable(
+            'diff_padding',
+            shape=outputs.get_shape(),
+            dtype=dtype,
+            initializer=tf.constant_initializer(),
+            regularizer=None,
+            trainable=False,
+            collections=weights_collections)
 
         # Bottom and top fixing...
         # print(diff_padding[:, 0, :, :].get_shape())
@@ -159,7 +167,7 @@ def separable_convolution2d_diffpad(
         diff_padding2 = control_flow_ops.with_dependencies([op5, op6, op7, op8],
                                                            diff_padding)
 
-        # Update padding!
+        # # Update padding!
         outputs = outputs + diff_padding2
 
         # Adding pointwise convolution.
