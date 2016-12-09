@@ -209,8 +209,8 @@ python eval_image_classifier.py \
 # ===========================================================================
 # Dception
 # ===========================================================================
-DATASET_DIR=/media/paul/DataExt4/ImageNet/Dataset
 DATASET_DIR=../datasets/ImageNet
+DATASET_DIR=/media/paul/DataExt4/ImageNet/Dataset
 TRAIN_DIR=./logs/dception
 CHECKPOINT_PATH=./checkpoints/xception_weights_tf_dim_ordering_tf_kernels.ckpt
 
@@ -254,4 +254,4 @@ python eval_image_classifier.py \
     --labels_offset=1 \
     --dataset_name=imagenet \
     --dataset_split_name=validation \
-    --model_name=xception
+    --model_name=dception
