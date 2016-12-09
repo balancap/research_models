@@ -22,7 +22,7 @@ def dception(inputs,
              dropout_keep_prob=0.5,
              prediction_fn=slim.softmax,
              reuse=None,
-             scope='dception'):
+             scope='xception'):
     """Xception model from https://arxiv.org/pdf/1610.02357v2.pdf
 
     The default image size used to train this network is 299x299.
