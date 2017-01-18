@@ -113,64 +113,6 @@ python eval_image_classifier.py \
     --model_name=tinynet
 
 # ===========================================================================
-# Xception
-# ===========================================================================
-DATASET_DIR=../datasets/ImageNet
-DATASET_DIR=/media/paul/DataExt4/ImageNet/Dataset
-TRAIN_DIR=./logs/xception
-CHECKPOINT_PATH=./checkpoints/xception_weights_tf_dim_ordering_tf_kernels.ckpt
-
-python train_image_classifier.py \
-    --train_dir=${TRAIN_DIR} \
-    --dataset_dir=${DATASET_DIR} \
-    --dataset_name=imagenet \
-    --dataset_split_name=train \
-    --model_name=xception \
-    --labels_offset=1 \
-    --checkpoint_path=${CHECKPOINT_PATH} \
-    --save_summaries_secs=60 \
-    --save_interval_secs=60 \
-    --weight_decay=0.00001 \
-    --optimizer=rmsprop \
-    --learning_rate=0.00005 \
-    --batch_size=1
-
-python train_image_classifier.py \
-    --train_dir=${TRAIN_DIR} \
-    --dataset_dir=${DATASET_DIR} \
-    --dataset_name=imagenet \
-    --dataset_split_name=train \
-    --model_name=xception \
-    --labels_offset=1 \
-    --save_summaries_secs=60 \
-    --save_interval_secs=60 \
-    --weight_decay=0.00001 \
-    --optimizer=rmsprop \
-    --learning_rate=0.00005 \
-    --batch_size=1
-
-
-CHECKPOINT_PATH=./checkpoints/xception_weights_tf_dim_ordering_tf_kernels.ckpt
-DATASET_DIR=../datasets/ImageNet
-DATASET_DIR=/media/paul/DataExt4/ImageNet/Dataset
-python eval_image_classifier.py \
-    --alsologtostderr \
-    --checkpoint_path=${CHECKPOINT_PATH} \
-    --dataset_dir=${DATASET_DIR} \
-    --labels_offset=1 \
-    --dataset_name=imagenet \
-    --dataset_split_name=validation \
-    --model_name=xception
-
-
-CHECKPOINT_PATH=./checkpoints/xception_weights_tf_dim_ordering_tf_kernels.h5
-python ckpt_keras_to_tensorflow.py \
-    --model_name=xception_keras \
-    --num_classes=1000 \
-    --checkpoint_path=${CHECKPOINT_PATH}
-
-
-# ===========================================================================
 # Inception v3
 # ===========================================================================
 DATASET_DIR=/media/paul/DataExt4/ImageNet/Dataset
@@ -194,9 +136,8 @@ python train_image_classifier.py \
 
 
 CHECKPOINT_PATH=/media/paul/DataExt4/ImageNet/Training/logs
-CHECKPOINT_PATH=./checkpoints/inception_v3.ckpt
+CHECKPOINT_PATH=/media/paul/DataExt4/ImageNet/Training/ckpts/inception_v3.ckpt
 DATASET_DIR=/media/paul/DataExt4/ImageNet/Dataset
-DATASET_DIR=../datasets/ImageNet
 python eval_image_classifier.py \
     --alsologtostderr \
     --checkpoint_path=${CHECKPOINT_PATH} \
@@ -204,6 +145,94 @@ python eval_image_classifier.py \
     --dataset_name=imagenet \
     --dataset_split_name=validation \
     --model_name=inception_v3
+
+
+# ===========================================================================
+# VGG 16 and 19
+# ===========================================================================
+CHECKPOINT_PATH=/media/paul/DataExt4/ImageNet/Training/ckpts/vgg_19.ckpt
+DATASET_DIR=/media/paul/DataExt4/ImageNet/Dataset
+python eval_image_classifier.py \
+    --alsologtostderr \
+    --checkpoint_path=${CHECKPOINT_PATH} \
+    --dataset_dir=${DATASET_DIR} \
+    --dataset_name=imagenet \
+    --labels_offset=1 \
+    --dataset_split_name=validation \
+    --model_name=vgg_19
+
+
+CHECKPOINT_PATH=/media/paul/DataExt4/ImageNet/Training/ckpts/vgg_16.ckpt
+DATASET_DIR=/media/paul/DataExt4/ImageNet/Dataset
+python eval_image_classifier.py \
+    --alsologtostderr \
+    --checkpoint_path=${CHECKPOINT_PATH} \
+    --dataset_dir=${DATASET_DIR} \
+    --dataset_name=imagenet \
+    --labels_offset=1 \
+    --dataset_split_name=validation \
+    --model_name=vgg_16
+
+
+# ===========================================================================
+# Xception
+# ===========================================================================
+DATASET_DIR=../datasets/ImageNet
+DATASET_DIR=/media/paul/DataExt4/ImageNet/Dataset
+TRAIN_DIR=./logs/xception
+CHECKPOINT_PATH=./checkpoints/xception_weights_tf_dim_ordering_tf_kernels.ckpt
+
+python train_image_classifier.py \
+    --train_dir=${TRAIN_DIR} \
+    --dataset_dir=${DATASET_DIR} \
+    --dataset_name=imagenet \
+    --dataset_split_name=train \
+    --model_name=xception \
+    --labels_offset=1 \
+    --checkpoint_path=${CHECKPOINT_PATH} \
+    --save_summaries_secs=600 \
+    --save_interval_secs=600 \
+    --weight_decay=0.00001 \
+    --optimizer=rmsprop \
+    --learning_rate=0.0001 \
+    --batch_size=32
+
+python train_image_classifier.py \
+    --train_dir=${TRAIN_DIR} \
+    --dataset_dir=${DATASET_DIR} \
+    --dataset_name=imagenet \
+    --dataset_split_name=train \
+    --model_name=xception \
+    --labels_offset=1 \
+    --save_summaries_secs=60 \
+    --save_interval_secs=60 \
+    --weight_decay=0.00001 \
+    --optimizer=rmsprop \
+    --learning_rate=0.00005 \
+    --batch_size=1
+
+
+CHECKPOINT_PATH=./checkpoints/xception_weights_tf_dim_ordering_tf_kernels.ckpt
+CHECKPOINT_PATH=./logs/xception
+CHECKPOINT_PATH=./checkpoints/xception_weights_tf_dim_ordering_tf_kernels.ckpt
+DATASET_DIR=../datasets/ImageNet
+DATASET_DIR=/media/paul/DataExt4/ImageNet/Dataset
+python eval_image_classifier.py \
+    --alsologtostderr \
+    --checkpoint_path=${CHECKPOINT_PATH} \
+    --dataset_dir=${DATASET_DIR} \
+    --labels_offset=1 \
+    --dataset_name=imagenet \
+    --dataset_split_name=validation \
+    --model_name=xception \
+    --max_num_batches=10
+
+
+CHECKPOINT_PATH=./checkpoints/xception_weights_tf_dim_ordering_tf_kernels.h5
+python ckpt_keras_to_tensorflow.py \
+    --model_name=xception_keras \
+    --num_classes=1000 \
+    --checkpoint_path=${CHECKPOINT_PATH}
 
 
 # ===========================================================================
@@ -227,7 +256,7 @@ python train_image_classifier.py \
     --weight_decay=0.00001 \
     --optimizer=rmsprop \
     --learning_rate=0.00005 \
-    --batch_size=1
+    --batch_size=32
 
 python train_image_classifier.py \
     --train_dir=${TRAIN_DIR} \
@@ -245,6 +274,7 @@ python train_image_classifier.py \
 
 
 CHECKPOINT_PATH=./checkpoints/xception_weights_tf_dim_ordering_tf_kernels.ckpt
+CHECKPOINT_PATH=./logs/dception
 DATASET_DIR=../datasets/ImageNet
 DATASET_DIR=/media/paul/DataExt4/ImageNet/Dataset
 python eval_image_classifier.py \
