@@ -80,7 +80,7 @@ def get_network_fn(name, num_classes, is_training=False, **kwargs):
     """
     if name not in networks_map:
         raise ValueError('Name of network unknown %s' % name)
-    arg_scope = arg_scopes_map[name](**kwargs)
+    arg_scope = arg_scopes_map[name](is_training=is_training, **kwargs)
     func = networks_map[name]
     @functools.wraps(func)
     def network_fn(images, **kwargs):

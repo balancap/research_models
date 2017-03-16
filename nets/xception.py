@@ -130,13 +130,10 @@ def xception_arg_scope(weight_decay=0.00001, stddev=0.1, is_training=False):
     batch_norm_params = {
         'center': True,
         'scale': False,
-        # Decay for the moving averages.
         'decay': 0.999,
-        # epsilon to prevent 0s in variance.
         'epsilon': 0.001,
-        # collection containing update_ops.
         'updates_collections': tf.GraphKeys.UPDATE_OPS,
-        # 'is_training': False,
+        'is_training': is_training,
         'fused': True
     }
 
@@ -209,7 +206,7 @@ def xception_keras_arg_scope(hdf5_file, weight_decay=0.00001, is_training=False)
 
         # Batch normalisation initializers.
         params = batch_norm_params.copy()
-        params['initializers'] = {
+        params['param_initializers'] = {
             'beta': _beta_initializer,
             'gamma': _gamma_initializer,
             'moving_mean': _mean_initializer,
