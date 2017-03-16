@@ -120,7 +120,7 @@ def dception(inputs,
 dception.default_image_size = 299
 
 
-def dception_arg_scope(weight_decay=0.00001, stddev=0.1):
+def dception_arg_scope(weight_decay=0.00001, stddev=0.1, is_training=False):
     """Defines the default Xception arg scope.
 
     Args:
@@ -131,12 +131,13 @@ def dception_arg_scope(weight_decay=0.00001, stddev=0.1):
       An `arg_scope` to use for the dception model.
     """
     batch_norm_params = {
-      # Decay for the moving averages.
-      'decay': 0.9997,
-      # epsilon to prevent 0s in variance.
-      'epsilon': 0.001,
-      # collection containing update_ops.
-      'updates_collections': tf.GraphKeys.UPDATE_OPS,
+        'center': True,
+        'scale': False,
+        'decay': 0.999,
+        'epsilon': 0.001,
+        'updates_collections': tf.GraphKeys.UPDATE_OPS,
+        'is_training': is_training,
+        'fused': True
     }
 
     # Set weight_decay for weights in Conv and FC layers.
