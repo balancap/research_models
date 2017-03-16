@@ -135,7 +135,6 @@ DeployedModel = collections.namedtuple('DeployedModel',
 # Default parameters for DeploymentConfig
 _deployment_params = {'num_clones': 1,
                       'clone_on_cpu': False,
-                      'fake_multiple_gpus': False,
                       'replica_id': 0,
                       'num_replicas': 1,
                       'num_ps_tasks': 0,
@@ -233,11 +232,9 @@ def _gather_clone_loss(clone, num_clones, regularization_losses):
       sum_loss = tf.add_n(all_losses)
   # Add the summaries out of the clone device block.
   if clone_loss is not None:
-    tf.scalar_summary(clone.scope + '/clone_loss', clone_loss,
-                      name='clone_loss')
+    tf.summary.scalar(clone.scope + '/clone_loss', clone_loss)
   if regularization_loss is not None:
-    tf.scalar_summary('regularization_loss', regularization_loss,
-                      name='regularization_loss')
+    tf.summary.scalar('regularization_loss', regularization_loss)
   return sum_loss
 
 
@@ -307,7 +304,7 @@ def optimize_clones(clones, optimizer,
       regularization_losses = None
   # Compute the total_loss summing all the clones_losses.
   total_loss = tf.add_n(clones_losses, name='total_loss')
-  # Sum the gradients accross clones.
+  # Sum the gradients across clones.
   grads_and_vars = _sum_clones_gradients(grads_and_vars)
   return total_loss, grads_and_vars
 
@@ -405,12 +402,11 @@ def deploy(config,
 
     if total_loss is not None:
       # Add total_loss to summary.
-      summaries.add(tf.scalar_summary('total_loss', total_loss,
-                                      name='total_loss'))
+      summaries.add(tf.summary.scalar('total_loss', total_loss))
 
     if summaries:
       # Merge all summaries together.
-      summary_op = tf.merge_summary(list(summaries), name='summary_op')
+      summary_op = tf.summary.merge(list(summaries), name='summary_op')
     else:
       summary_op = None
 
@@ -468,9 +464,9 @@ def _add_gradients_summaries(grads_and_vars):
         grad_values = grad.values
       else:
         grad_values = grad
-      summaries.append(tf.histogram_summary(var.op.name + ':gradient',
+      summaries.append(tf.summary.histogram(var.op.name + ':gradient',
                                             grad_values))
-      summaries.append(tf.histogram_summary(var.op.name + ':gradient_norm',
+      summaries.append(tf.summary.histogram(var.op.name + ':gradient_norm',
                                             tf.global_norm([grad_values])))
     else:
       tf.logging.info('Var %s has no gradient', var.op.name)
@@ -488,7 +484,6 @@ class DeploymentConfig(object):
   def __init__(self,
                num_clones=1,
                clone_on_cpu=False,
-               fake_multiple_gpus=False,
                replica_id=0,
                num_replicas=1,
                num_ps_tasks=0,
@@ -499,10 +494,6 @@ class DeploymentConfig(object):
     The config describes how to deploy a model across multiple clones and
     replicas.  The model will be replicated `num_clones` times in each replica.
     If `clone_on_cpu` is True, each clone will placed on CPU.
-
-    If `fake_multiple_gpus` is True, the model will only be replicated once on
-    a single GPU. This trick enables larger batch sizes, necessary for training
-    deep networks such as InceptionV3/V4, on a single GPU.
 
     If `num_replicas` is 1, the model is deployed via a single process.  In that
     case `worker_device`, `num_ps_tasks`, and `ps_device` are ignored.
@@ -536,7 +527,6 @@ class DeploymentConfig(object):
       raise ValueError('replica_id must be less than num_replicas')
     self._num_clones = num_clones
     self._clone_on_cpu = clone_on_cpu
-    self._fake_multiple_gpus = fake_multiple_gpus
     self._replica_id = replica_id
     self._num_replicas = num_replicas
     self._num_ps_tasks = num_ps_tasks
@@ -550,10 +540,6 @@ class DeploymentConfig(object):
   @property
   def clone_on_cpu(self):
     return self._clone_on_cpu
-
-  @property
-  def fake_multiple_gpus(self):
-    return self._fake_multiple_gpus
 
   @property
   def replica_id(self):
@@ -608,7 +594,7 @@ class DeploymentConfig(object):
     if self._clone_on_cpu:
       device += '/device:CPU:0'
     else:
-      if self._num_clones > 1 and not self._fake_multiple_gpus:
+      if self._num_clones > 1:
         device += '/device:GPU:%d' % clone_index
     return device
 

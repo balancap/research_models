@@ -171,7 +171,27 @@ python eval_image_classifier.py \
     --dataset_name=imagenet \
     --labels_offset=1 \
     --dataset_split_name=validation \
-    --model_name=vgg_16
+    --model_name=vgg_16 \
+    --max_num_batches=10
+
+
+CHECKPOINT_PATH=/media/paul/DataExt4/ImageNet/Training/ckpts/vgg_16.ckpt
+DATASET_DIR=/media/paul/DataExt4/ImageNet/Dataset
+TRAIN_DIR=/media/paul/DataExt4/ImageNet/Training/log_vgg_1
+python train_image_classifier.py \
+    --train_dir=${TRAIN_DIR} \
+    --dataset_dir=${DATASET_DIR} \
+    --dataset_name=imagenet \
+    --dataset_split_name=train \
+    --model_name=vgg_16 \
+    --labels_offset=1 \
+    --checkpoint_path=${CHECKPOINT_PATH} \
+    --save_summaries_secs=60 \
+    --save_interval_secs=60 \
+    --weight_decay=0.00001 \
+    --optimizer=rmsprop \
+    --learning_rate=0.0001 \
+    --batch_size=32
 
 
 # ===========================================================================
@@ -179,9 +199,8 @@ python eval_image_classifier.py \
 # ===========================================================================
 DATASET_DIR=../datasets/ImageNet
 DATASET_DIR=/media/paul/DataExt4/ImageNet/Dataset
-TRAIN_DIR=./logs/xception
+TRAIN_DIR=/media/paul/DataExt4/ImageNet/Training/log_xception_1
 CHECKPOINT_PATH=./checkpoints/xception_weights_tf_dim_ordering_tf_kernels.ckpt
-
 python train_image_classifier.py \
     --train_dir=${TRAIN_DIR} \
     --dataset_dir=${DATASET_DIR} \
@@ -190,8 +209,8 @@ python train_image_classifier.py \
     --model_name=xception \
     --labels_offset=1 \
     --checkpoint_path=${CHECKPOINT_PATH} \
-    --save_summaries_secs=600 \
-    --save_interval_secs=600 \
+    --save_summaries_secs=60 \
+    --save_interval_secs=60 \
     --weight_decay=0.00001 \
     --optimizer=rmsprop \
     --learning_rate=0.0001 \
@@ -214,8 +233,9 @@ python train_image_classifier.py \
 
 CHECKPOINT_PATH=./checkpoints/xception_weights_tf_dim_ordering_tf_kernels.ckpt
 CHECKPOINT_PATH=./logs/xception
-CHECKPOINT_PATH=./checkpoints/xception_weights_tf_dim_ordering_tf_kernels.ckpt
 DATASET_DIR=../datasets/ImageNet
+
+CHECKPOINT_PATH=./checkpoints/xception_weights_tf_dim_ordering_tf_kernels.ckpt
 DATASET_DIR=/media/paul/DataExt4/ImageNet/Dataset
 python eval_image_classifier.py \
     --alsologtostderr \

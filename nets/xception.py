@@ -117,7 +117,7 @@ def xception(inputs,
 xception.default_image_size = 299
 
 
-def xception_arg_scope(weight_decay=0.00001, stddev=0.1):
+def xception_arg_scope(weight_decay=0.00001, stddev=0.1, is_training=False):
     """Defines the default Xception arg scope.
 
     Args:
@@ -128,12 +128,16 @@ def xception_arg_scope(weight_decay=0.00001, stddev=0.1):
       An `arg_scope` to use for the xception model.
     """
     batch_norm_params = {
-      # Decay for the moving averages.
-      'decay': 0.9997,
-      # epsilon to prevent 0s in variance.
-      'epsilon': 0.001,
-      # collection containing update_ops.
-      'updates_collections': tf.GraphKeys.UPDATE_OPS,
+        'center': True,
+        'scale': False,
+        # Decay for the moving averages.
+        'decay': 0.999,
+        # epsilon to prevent 0s in variance.
+        'epsilon': 0.001,
+        # collection containing update_ops.
+        'updates_collections': tf.GraphKeys.UPDATE_OPS,
+        # 'is_training': False,
+        'fused': True
     }
 
     # Set weight_decay for weights in Conv and FC layers.
@@ -142,7 +146,7 @@ def xception_arg_scope(weight_decay=0.00001, stddev=0.1):
         with slim.arg_scope(
                 [slim.conv2d, slim.separable_convolution2d],
                 padding='SAME',
-                weights_initializer=tf.contrib.layers.variance_scaling_initializer(factor=2.0, mode='FAN_IN', uniform=False),
+                # weights_initializer=tf.contrib.layers.variance_scaling_initializer(factor=2.0, mode='FAN_IN', uniform=False),
                 activation_fn=tf.nn.relu,
                 normalizer_fn=slim.batch_norm,
                 normalizer_params=batch_norm_params):
@@ -153,7 +157,7 @@ def xception_arg_scope(weight_decay=0.00001, stddev=0.1):
 # =========================================================================== #
 # Xception arg scope (Keras hack!)
 # =========================================================================== #
-def xception_keras_arg_scope(hdf5_file, weight_decay=0.00001):
+def xception_keras_arg_scope(hdf5_file, weight_decay=0.00001, is_training=False):
     """Defines an Xception arg scope which initialize layers weights
     using a Keras HDF5 file.
 
@@ -173,6 +177,8 @@ def xception_keras_arg_scope(hdf5_file, weight_decay=0.00001):
         'decay': 0.9997,
         'epsilon': 0.001,
         'updates_collections': tf.GraphKeys.UPDATE_OPS,
+        'is_training': False,
+        'fused': True
     }
 
     # Read weights from HDF5 file.
