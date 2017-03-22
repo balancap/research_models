@@ -260,7 +260,7 @@ python ckpt_keras_to_tensorflow.py \
 # ===========================================================================
 DATASET_DIR=../datasets/ImageNet
 DATASET_DIR=/media/paul/DataExt4/ImageNet/Dataset
-TRAIN_DIR=/media/paul/DataExt4/ImageNet/Training/logs_dception
+TRAIN_DIR=/media/paul/DataExt4/ImageNet/Training/logs_dception/2
 CHECKPOINT_PATH=./checkpoints/xception_weights_tf_dim_ordering_tf_kernels.ckpt
 python train_image_classifier.py \
     --train_dir=${TRAIN_DIR} \
@@ -273,9 +273,10 @@ python train_image_classifier.py \
     --save_summaries_secs=60 \
     --save_interval_secs=600 \
     --weight_decay=0.00001 \
+    --learning_rate_decay_factor=0.94 \
     --optimizer=rmsprop \
-    --learning_rate=0.00005 \
-    --batch_size=32
+    --learning_rate=0.005 \
+    --batch_size=26
 
 python train_image_classifier.py \
     --train_dir=${TRAIN_DIR} \
