@@ -178,7 +178,25 @@ def btree_block(
         return output
 
 
-
+def btree_conv_1x1(
+        inputs,
+        num_outputs=None,
+        bsize=2,
+        activation_fn=None,
+        normalizer_fn=None,
+        normalizer_params=None,
+        weights_initializer=initializers.xavier_initializer(),
+        weights_regularizer=None,
+        biases_initializer=init_ops.zeros_initializer(),
+        biases_regularizer=None,
+        reuse=None,
+        variables_collections=None,
+        outputs_collections=None,
+        trainable=True,
+        scope=None):
+    with variable_scope.variable_scope(
+            scope, 'btree_conv_1x1', [inputs], reuse=reuse) as sc:
+        pass
 
 
 
