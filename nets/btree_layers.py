@@ -103,7 +103,7 @@ def btree_block(
         inputs,
         num_outputs=None,
         bsize=2,
-        end_permutation=False,
+        out_permutation=False,
         activation_fn=None,
         normalizer_fn=None,
         normalizer_params=None,
@@ -123,7 +123,7 @@ def btree_block(
       num_outputs: Should be greater than inputs channel size!
       bsize: Basic block size. Input is padded during computation to be a multiple
         of this parameter.
-      end_permutation: Perform a permutation of resulting computation.
+      out_permutation: Perform a permutation of resulting computation.
         Necessary for chaining up B-tree blocks.
     """
     with variable_scope.variable_scope(
@@ -137,31 +137,45 @@ def btree_block(
         paddings = [[0, 0], [0, 0], [0, 0], [0, nchannels % bsize]]
         inputs = tf.pad(inputs, paddings, mode='CONSTANT')
         nchannels_pad = nchannels + nchannels % bsize
-        # Pad as well number of outputs.
-        num_outputs = nchannels if num_outputs is None else num_outputs
-        num_outputs_pad = num_outputs + num_outputs % bsize
-        # Number of inputs and outputs blocks.
-        n_blocks_in = nchannels_pad // bsize
-        n_blocks_out = num_outputs_pad // bsize
+        n_blocks = nchannels_pad // bsize
 
-        # Weights for fully connected-like layer.
+        # Output shape...
+        num_outputs = nchannels if num_outputs is None else num_outputs
+        bsize_out = math.ceil(num_outputs / n_blocks)
+
+        # All the weights for fully connected-like layer.
         weights_collections = utils.get_variable_collections(
                     variables_collections, 'weights')
-        w_shape = [1, bsize, n_blocks_out]
+        w_shape = [n_blocks, bsize, bsize_out]
         weights = variables.model_variable(
-                'depthwise_weights',
+                'btree_weights',
                 shape=w_shape,
                 dtype=dtype,
                 initializer=weights_initializer,
                 regularizer=weights_regularizer,
                 trainable=trainable,
                 collections=weights_collections)
+        # Reshape input for computation.
+        inputs = tf.reshape([-1, n_blocks, bsize])
+        inputs = tf.transpose(inputs, perm=[1, 0, 2])
 
-        # Matmul for fully connected-like block.
-        inputs = tf.reshape([-1, n_blocks_in, bsize])
-        weights = tf.tile(weights, [get_shape(inputs)[0], 1, 1])
-        outputs = tf.matmul(inputs, weights)
-        # TODO: BIAS and Batch norm?
+        # Parallel computations...
+        outputs = []
+        for i in range(n_blocks):
+            outputs += tf.unstack(tf.matmul(inputs[i], weights[i]), axis=-1)
+        # Output permutation.
+        if out_permutation:
+            out_perm = []
+            for i in range(bsize_out):
+                out_perm += outputs[i::bsize_out]
+            outputs = out_perm
+
+        # Form output Tensor and reshape.
+        outputs = outputs[:num_outputs]
+        output = tf.stack(outputs, axis=-1)
+        output = tf.reshape(output, inshape[:-1] + [-1])
+        # TODO: Bias + BN...
+        return output
 
 
 
