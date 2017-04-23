@@ -28,6 +28,34 @@ from tensorflow.python.ops import variables as tf_variables
 from tensorflow.python.training import moving_averages
 
 
+# =========================================================================== #
+# TensorFlow contrib stuff
+# =========================================================================== #
+def get_shape(x, rank=None):
+    """Returns the dimensions of a Tensor as list of integers or scale tensors.
+
+    Args:
+      x: N-d Tensor;
+      rank: Rank of the Tensor. If None, will try to guess it.
+    Returns:
+      A list of `[d1, d2, ..., dN]` corresponding to the dimensions of the
+        input tensor.  Dimensions that are statically known are python integers,
+        otherwise they are integer scalar tensors.
+    """
+    if x.get_shape().is_fully_defined():
+        return x.get_shape().as_list()
+    else:
+        static_shape = x.get_shape()
+        if rank is None:
+            static_shape = static_shape.as_list()
+            rank = len(static_shape)
+        else:
+            static_shape = x.get_shape().with_rank(rank).as_list()
+        dynamic_shape = tf.unstack(tf.shape(x), rank)
+        return [s if s is not None else d
+                for s, d in zip(static_shape, dynamic_shape)]
+
+
 def _add_variable_to_collections(variable, collections_set, collections_name):
     """Adds variable (or all its parts) to all collections with that name."""
     collections = utils.get_variable_collections(
@@ -68,27 +96,103 @@ def _build_variable_getter(rename=None):
     return layer_variable_getter
 
 
+# =========================================================================== #
+# 1x1 B-tree layer.
+# =========================================================================== #
+def btree_block(
+        inputs,
+        num_outputs=None,
+        bsize=2,
+        end_permutation=False,
+        activation_fn=None,
+        normalizer_fn=None,
+        normalizer_params=None,
+        weights_initializer=initializers.xavier_initializer(),
+        weights_regularizer=None,
+        biases_initializer=init_ops.zeros_initializer(),
+        biases_regularizer=None,
+        reuse=None,
+        variables_collections=None,
+        outputs_collections=None,
+        trainable=True,
+        scope=None):
+    """Basic block use for B-tree 1x1 convolution.
+
+    Args:
+      inputs: Input Tensor, supposed to be in NHWC format.
+      num_outputs: Should be greater than inputs channel size!
+      bsize: Basic block size. Input is padded during computation to be a multiple
+        of this parameter.
+      end_permutation: Perform a permutation of resulting computation.
+        Necessary for chaining up B-tree blocks.
+    """
+    with variable_scope.variable_scope(
+            scope, 'btree_block', [inputs], reuse=reuse) as sc:
+        inputs = ops.convert_to_tensor(inputs)
+        dtype = inputs.dtype.base_dtype
+        inshape = get_shape(inputs, rank=4)
+        nchannels = inshape[-1]     # Note: suppose to be statically defined!
+
+        # Pad to be a factor of block size.
+        paddings = [[0, 0], [0, 0], [0, 0], [0, nchannels % bsize]]
+        inputs = tf.pad(inputs, paddings, mode='CONSTANT')
+        nchannels_pad = nchannels + nchannels % bsize
+        # Pad as well number of outputs.
+        num_outputs = nchannels if num_outputs is None else num_outputs
+        num_outputs_pad = num_outputs + num_outputs % bsize
+        # Number of inputs and outputs blocks.
+        n_blocks_in = nchannels_pad // bsize
+        n_blocks_out = num_outputs_pad // bsize
+
+        # Weights for fully connected-like layer.
+        weights_collections = utils.get_variable_collections(
+                    variables_collections, 'weights')
+        w_shape = [1, bsize, n_blocks_out]
+        weights = variables.model_variable(
+                'depthwise_weights',
+                shape=w_shape,
+                dtype=dtype,
+                initializer=weights_initializer,
+                regularizer=weights_regularizer,
+                trainable=trainable,
+                collections=weights_collections)
+
+        # Matmul for fully connected-like block.
+        inputs = tf.reshape([-1, n_blocks_in, bsize])
+        weights = tf.tile(weights, [get_shape(inputs)[0], 1, 1])
+        outputs = tf.matmul(inputs, weights)
+        # TODO: BIAS and Batch norm?
+
+
+
+
+
+
+
+# =========================================================================== #
+# Re-implemenation of separable convolution layer.
+# =========================================================================== #
 @add_arg_scope
 def separable_convolution2d(
-    inputs,
-    num_outputs,
-    kernel_size,
-    depth_multiplier,
-    stride=1,
-    padding='SAME',
-    rate=1,
-    activation_fn=nn.relu,
-    normalizer_fn=None,
-    normalizer_params=None,
-    weights_initializer=initializers.xavier_initializer(),
-    weights_regularizer=None,
-    biases_initializer=init_ops.zeros_initializer(),
-    biases_regularizer=None,
-    reuse=None,
-    variables_collections=None,
-    outputs_collections=None,
-    trainable=True,
-    scope=None):
+        inputs,
+        num_outputs,
+        kernel_size,
+        depth_multiplier,
+        stride=1,
+        padding='SAME',
+        rate=1,
+        activation_fn=nn.relu,
+        normalizer_fn=None,
+        normalizer_params=None,
+        weights_initializer=initializers.xavier_initializer(),
+        weights_regularizer=None,
+        biases_initializer=init_ops.zeros_initializer(),
+        biases_regularizer=None,
+        reuse=None,
+        variables_collections=None,
+        outputs_collections=None,
+        trainable=True,
+        scope=None):
     """Adds a depth-separable 2D convolution with optional batch_norm layer.
     This op first performs a depthwise convolution that acts separately on
     channels, creating a variable called `depthwise_weights`. If `num_outputs`
