@@ -191,11 +191,11 @@ python ckpt_keras_to_tensorflow.py \
 # Xception B-tree
 # ===========================================================================
 DATASET_DIR=/home/paul/Development/Datasets/ImageNet
-TRAIN_DIR=./logs/log_xception1
+TRAIN_DIR=./logs/log_xception_btree_1
 CHECKPOINT_PATH=./checkpoints/xception_weights_tf_dim_ordering_tf_kernels.ckpt
 
 DATASET_DIR=/media/paul/DataExt4/ImageNet/Dataset
-TRAIN_DIR=/media/paul/DataExt4/ImageNet/Training/logs_xception
+TRAIN_DIR=/media/paul/DataExt4/ImageNet/Training/logs/log_xception_btree_1
 CHECKPOINT_PATH=./checkpoints/xception_weights_tf_dim_ordering_tf_kernels.ckpt
 
 python train_image_classifier.py \
@@ -206,12 +206,14 @@ python train_image_classifier.py \
     --model_name=xception_btree \
     --labels_offset=1 \
     --checkpoint_path=${CHECKPOINT_PATH} \
+    --trainable_scopes=xception/block2/sepconv1/btree_conv_1x1
     --ignore_missing_vars=True \
-    --save_summaries_secs=600 \
+    --save_summaries_secs=60 \
     --save_interval_secs=600 \
     --weight_decay=0.00001 \
     --optimizer=rmsprop \
     --learning_rate=0.0001 \
+    --learning_rate_decay_factor=0.94 \
     --batch_size=32
 
 

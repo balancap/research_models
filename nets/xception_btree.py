@@ -31,6 +31,10 @@ def xception(inputs,
     end_points = {}
 
     with tf.variable_scope(scope, 'xception', [inputs]):
+        # B-tree parameters.
+        bsize = 2
+        bheight = None
+
         # Block 1.
         end_point = 'block1'
         with tf.variable_scope(end_point):
@@ -42,8 +46,15 @@ def xception(inputs,
         end_point = 'block2'
         with tf.variable_scope(end_point):
             res = slim.conv2d(net, 128, [1, 1], stride=2, activation_fn=None, scope='res')
-            net = slim.separable_convolution2d(net, 128, [3, 3], 1, scope='sepconv1')
+
+            net = blayers.separable_convolution2d_btree(net,
+                                                        128, [3, 3], 1,
+                                                        bsize=bsize,
+                                                        bheight=bheight,
+                                                        scope='sepconv1')
+            # net = slim.separable_convolution2d(net, 128, [3, 3], 1, scope='sepconv1')
             net = slim.separable_convolution2d(net, 128, [3, 3], 1, activation_fn=None, scope='sepconv2')
+
             net = slim.max_pool2d(net, [3, 3], stride=2, scope='pool')
             net = res + net
         end_points[end_point] = net
@@ -139,10 +150,14 @@ def xception_arg_scope(weight_decay=0.00001, stddev=0.1, is_training=False):
     }
 
     # Set weight_decay for weights in Conv and FC layers.
-    with slim.arg_scope([slim.conv2d, slim.fully_connected, slim.separable_convolution2d],
+    with slim.arg_scope([slim.conv2d,
+                         slim.fully_connected,
+                         slim.separable_convolution2d,
+                         blayers.separable_convolution2d_btree],
                         weights_regularizer=slim.l2_regularizer(weight_decay)):
         with slim.arg_scope(
-                [slim.conv2d, slim.separable_convolution2d],
+                [slim.conv2d, slim.separable_convolution2d,
+                 blayers.separable_convolution2d_btree],
                 padding='SAME',
                 # weights_initializer=tf.contrib.layers.variance_scaling_initializer(factor=2.0, mode='FAN_IN', uniform=False),
                 activation_fn=tf.nn.relu,

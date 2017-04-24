@@ -156,7 +156,7 @@ def btree_block(
                 trainable=trainable,
                 collections=weights_collections)
         # Reshape input for computation.
-        inputs = tf.reshape([-1, n_blocks, bsize])
+        inputs = tf.reshape(inputs, [-1, n_blocks, bsize])
         inputs = tf.transpose(inputs, perm=[1, 0, 2])
 
         # Parallel computations...
