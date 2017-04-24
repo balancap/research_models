@@ -5,8 +5,9 @@ Usage:
     outputs, end_points = xception.xception(inputs)
 @@xception
 """
-
 import tensorflow as tf
+from nets import btree_layers as blayers
+
 slim = tf.contrib.slim
 
 

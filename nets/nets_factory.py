@@ -29,6 +29,7 @@ from nets import inception
 from nets import vgg
 from nets import xception
 from nets import dception
+from nets import xception_btree
 
 slim = tf.contrib.slim
 
@@ -44,6 +45,7 @@ networks_map = {'cifarnet': cifarnet.cifarnet,
                 'inception_resnet_v2': inception.inception_resnet_v2,
                 'xception': xception.xception,
                 'xception_keras': xception.xception,
+                'xception_btree': xception_btree.xception,
                 'dception': dception.dception,
                 }
 
@@ -59,6 +61,7 @@ arg_scopes_map = {'cifarnet': cifarnet.cifarnet_arg_scope,
                   'inception_resnet_v2': inception.inception_resnet_v2_arg_scope,
                   'xception': xception.xception_arg_scope,
                   'xception_keras': xception.xception_keras_arg_scope,
+                  'xception_btree': xception_btree.xception_arg_scope,
                   'dception': dception.dception_arg_scope,
                   }
 

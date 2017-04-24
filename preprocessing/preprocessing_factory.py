@@ -57,6 +57,7 @@ def get_preprocessing(name, is_training=False):
         'inception_resnet_v2': inception_preprocessing,
         'xception': inception_preprocessing,
         'xception_keras': inception_preprocessing,
+        'xception_btree': inception_preprocessing,
         'dception': inception_preprocessing,
       }
 
