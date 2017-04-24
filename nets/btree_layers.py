@@ -180,8 +180,9 @@ def btree_block(
 
 def btree_conv_1x1(
         inputs,
-        num_outputs=None,
+        num_outputs,
         bsize=2,
+        bheight=None,
         activation_fn=None,
         normalizer_fn=None,
         normalizer_params=None,
@@ -194,18 +195,59 @@ def btree_conv_1x1(
         outputs_collections=None,
         trainable=True,
         scope=None):
+    """
+    Args:
+      inputs: Input Tensor, supposed to be in NHWC format.
+      num_outputs: Should be greater than inputs channel size!
+      bsize: Basic block size. Input is padded during computation to be a multiple
+        of this parameter.
+      bheight: B-tree height. If None, ceil of log_b(C).
+    """
     with variable_scope.variable_scope(
             scope, 'btree_conv_1x1', [inputs], reuse=reuse) as sc:
-        pass
+        # Compute height...
+        if bheight is None:
+            bheight = math.ceil(math.log(num_outputs, bsize))
+
+        # Construct the B-tree...
+        outputs = inputs
+        for i in range(bheight):
+            scope = 'block_%i' % i
+            outputs = btree_block(
+                outputs,
+                num_outputs=num_outputs,
+                bsize=bsize,
+                out_permutation=i+1 != bheight,
+                activation_fn=activation_fn,
+                normalizer_fn=normalizer_fn,
+                normalizer_params=normalizer_params,
+                weights_initializer=weights_initializer,
+                weights_regularizer=weights_regularizer,
+                biases_initializer=biases_initializer,
+                biases_regularizer=biases_regularizer,
+                reuse=reuse,
+                variables_collections=variables_collections,
+                outputs_collections=outputs_collections,
+                trainable=trainable,
+                scope=scope)
+        return outputs
+
+
+
 
 
 
 
 # =========================================================================== #
-# Re-implemenation of separable convolution layer.
+# Re-implemenation of separable convolution using B-trees...
+# =========================================================================== #
+
+
+# =========================================================================== #
+# Shameless copy-paste from TensorFlow Github!
 # =========================================================================== #
 @add_arg_scope
-def separable_convolution2d(
+def separable_convolution2d_old(
         inputs,
         num_outputs,
         kernel_size,
