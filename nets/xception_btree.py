@@ -146,7 +146,7 @@ def xception_arg_scope(weight_decay=0.00001, stddev=0.1, is_training=False):
         'epsilon': 0.001,
         'updates_collections': tf.GraphKeys.UPDATE_OPS,
         'is_training': is_training,
-        'fused': True
+        'fused': False
     }
 
     # Set weight_decay for weights in Conv and FC layers.
