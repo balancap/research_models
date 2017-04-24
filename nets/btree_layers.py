@@ -307,12 +307,12 @@ def separable_convolution2d(
 
             # Add variables to collections.
             _add_variable_to_collections(layer.depthwise_kernel,
-                                                                     variables_collections, 'weights')
+                                         variables_collections, 'weights')
             _add_variable_to_collections(layer.pointwise_kernel,
-                                                                     variables_collections, 'weights')
+                                         variables_collections, 'weights')
             if layer.bias:
                 _add_variable_to_collections(layer.bias,
-                                                                         variables_collections, 'biases')
+                                             variables_collections, 'biases')
 
             if normalizer_fn is not None:
                 normalizer_params = normalizer_params or {}
