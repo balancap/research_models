@@ -195,9 +195,8 @@ TRAIN_DIR=./logs/log_xception_btree_1
 CHECKPOINT_PATH=./checkpoints/xception_weights_tf_dim_ordering_tf_kernels.ckpt
 
 DATASET_DIR=/media/paul/DataExt4/ImageNet/Dataset
-TRAIN_DIR=/media/paul/DataExt4/ImageNet/Training/logs/log_xception_btree_1
+TRAIN_DIR=/media/paul/DataExt4/ImageNet/Training/logs_xception_btree/log_001
 CHECKPOINT_PATH=./checkpoints/xception_weights_tf_dim_ordering_tf_kernels.ckpt
-
 python train_image_classifier.py \
     --train_dir=${TRAIN_DIR} \
     --dataset_dir=${DATASET_DIR} \
