@@ -146,22 +146,34 @@ def btree_block(
         # All the weights for fully connected-like layer.
         weights_collections = utils.get_variable_collections(
                     variables_collections, 'weights')
-        w_shape = [n_blocks, bsize, bsize_out]
-        weights = variables.model_variable(
-                'btree_weights',
+        # w_shape = [n_blocks, bsize, bsize_out]
+        # weights = variables.model_variable(
+        #         'btree_weights',
+        #         shape=w_shape,
+        #         dtype=dtype,
+        #         initializer=weights_initializer,
+        #         regularizer=weights_regularizer,
+        #         trainable=trainable,
+        #         collections=weights_collections)
+        weights = []
+        w_shape = [bsize, bsize_out]
+        for i in range(n_blocks):
+            weights.append(variables.model_variable(
+                'btree_weights_%i' % i,
                 shape=w_shape,
                 dtype=dtype,
                 initializer=weights_initializer,
                 regularizer=weights_regularizer,
                 trainable=trainable,
-                collections=weights_collections)
+                collections=weights_collections))
+
         # Reshape input for computation.
         inputs = tf.reshape(inputs, [-1, n_blocks, bsize])
         inputs = tf.transpose(inputs, perm=[1, 0, 2])
-
         # Parallel computations...
         outputs = []
         for i in range(n_blocks):
+            # outputs += tf.unstack(tf.matmul(inputs[i], weights[i]), axis=-1)
             outputs += tf.unstack(tf.matmul(inputs[i], weights[i]), axis=-1)
         # Output permutation.
         if out_permutation:
