@@ -93,8 +93,20 @@ def xception(inputs,
         with tf.variable_scope(end_point):
             res = slim.conv2d(net, 728, [1, 1], stride=2, activation_fn=None, scope='res')
             net = tf.nn.relu(net)
-            net = slim.separable_convolution2d(net, 728, [3, 3], 1, scope='sepconv1')
-            net = slim.separable_convolution2d(net, 728, [3, 3], 1, activation_fn=None, scope='sepconv2')
+            net = blayers.separable_convolution2d_btree(net,
+                                                        728, [3, 3], 1,
+                                                        bsize=bsize,
+                                                        bheight=bheight,
+                                                        scope='sepconv1')
+            net = blayers.separable_convolution2d_btree(net,
+                                                        728, [3, 3], 1,
+                                                        bsize=bsize,
+                                                        bheight=bheight,
+                                                        activation_fn=None,
+                                                        scope='sepconv2')
+
+            # net = slim.separable_convolution2d(net, 728, [3, 3], 1, scope='sepconv1')
+            # net = slim.separable_convolution2d(net, 728, [3, 3], 1, activation_fn=None, scope='sepconv2')
             net = slim.max_pool2d(net, [3, 3], stride=2, scope='pool')
             net = res + net
         end_points[end_point] = net
@@ -105,21 +117,35 @@ def xception(inputs,
             with tf.variable_scope(end_point):
                 res = net
                 net = tf.nn.relu(net)
-                # net = blayers.separable_convolution2d_btree(net,
-                #                                             728, [3, 3], 1,
-                #                                             bsize=bsize,
-                #                                             bheight=bheight,
-                #                                             activation_fn=None,
-                #                                             scope='sepconv1')
+                net = blayers.separable_convolution2d_btree(net,
+                                                            728, [3, 3], 1,
+                                                            bsize=bsize,
+                                                            bheight=bheight,
+                                                            activation_fn=None,
+                                                            scope='sepconv1')
+                net = tf.nn.relu(net)
+                net = blayers.separable_convolution2d_btree(net,
+                                                            728, [3, 3], 1,
+                                                            bsize=bsize,
+                                                            bheight=bheight,
+                                                            activation_fn=None,
+                                                            scope='sepconv2')
+                net = tf.nn.relu(net)
+                net = blayers.separable_convolution2d_btree(net,
+                                                            728, [3, 3], 1,
+                                                            bsize=bsize,
+                                                            bheight=bheight,
+                                                            activation_fn=None,
+                                                            scope='sepconv3')
 
-                net = slim.separable_convolution2d(net, 728, [3, 3], 1, activation_fn=None,
-                                                   scope='sepconv1')
-                net = tf.nn.relu(net)
-                net = slim.separable_convolution2d(net, 728, [3, 3], 1, activation_fn=None,
-                                                   scope='sepconv2')
-                net = tf.nn.relu(net)
-                net = slim.separable_convolution2d(net, 728, [3, 3], 1, activation_fn=None,
-                                                   scope='sepconv3')
+                # net = slim.separable_convolution2d(net, 728, [3, 3], 1, activation_fn=None,
+                #                                    scope='sepconv1')
+                # net = tf.nn.relu(net)
+                # net = slim.separable_convolution2d(net, 728, [3, 3], 1, activation_fn=None,
+                #                                    scope='sepconv2')
+                # net = tf.nn.relu(net)
+                # net = slim.separable_convolution2d(net, 728, [3, 3], 1, activation_fn=None,
+                #                                    scope='sepconv3')
                 net = res + net
             end_points[end_point] = net
 
@@ -127,6 +153,20 @@ def xception(inputs,
         end_point = 'block13'
         with tf.variable_scope(end_point):
             res = slim.conv2d(net, 1024, [1, 1], stride=2, activation_fn=None, scope='res')
+            # net = tf.nn.relu(net)
+            # net = blayers.separable_convolution2d_btree(net,
+            #                                             728, [3, 3], 1,
+            #                                             bsize=bsize,
+            #                                             bheight=bheight,
+            #                                             activation_fn=None,
+            #                                             scope='sepconv1')
+            # net = tf.nn.relu(net)
+            # net = blayers.separable_convolution2d_btree(net,
+            #                                             1024, [3, 3], 1,
+            #                                             bsize=bsize,
+            #                                             bheight=bheight,
+            #                                             activation_fn=None,
+            #                                             scope='sepconv2')
             net = tf.nn.relu(net)
             net = slim.separable_convolution2d(net, 728, [3, 3], 1, activation_fn=None, scope='sepconv1')
             net = tf.nn.relu(net)

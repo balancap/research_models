@@ -12,5 +12,6 @@ preprocessing/__pycache__/
 logs/
 checkpoints/checkpoint
 
+nohup.out
 *.sublime-workspace
 *.sublime-project

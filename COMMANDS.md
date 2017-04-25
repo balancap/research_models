@@ -195,7 +195,7 @@ TRAIN_DIR=./logs/log_xception_btree_1
 CHECKPOINT_PATH=./checkpoints/xception_weights_tf_dim_ordering_tf_kernels.ckpt
 
 DATASET_DIR=/media/paul/DataExt4/ImageNet/Dataset
-TRAIN_DIR=/media/paul/DataExt4/ImageNet/Training/logs_xception_btree/log_006
+TRAIN_DIR=/media/paul/DataExt4/ImageNet/Training/logs_xception_btree/log_008
 CHECKPOINT_PATH=./checkpoints/xception_weights_tf_dim_ordering_tf_kernels.ckpt
 nohup python train_image_classifier.py \
     --train_dir=${TRAIN_DIR} \
@@ -205,14 +205,14 @@ nohup python train_image_classifier.py \
     --model_name=xception_btree \
     --labels_offset=1 \
     --checkpoint_path=${CHECKPOINT_PATH} \
-    --trainable_scopes=xception/block2/sepconv1/btree_conv_1x1,xception/block2/sepconv1/BatchNorm,xception/block2/sepconv2/btree_conv_1x1,xception/block2/sepconv2/BatchNorm,xception/block3/sepconv1/btree_conv_1x1,xception/block3/sepconv1/BatchNorm,xception/block3/sepconv2/btree_conv_1x1,xception/block3/sepconv2/BatchNorm \
+    --trainable_scopes=xception/block2/sepconv1/btree_conv_1x1,xception/block2/sepconv1/BatchNorm,xception/block2/sepconv2/btree_conv_1x1,xception/block2/sepconv2/BatchNorm,xception/block3/sepconv1/btree_conv_1x1,xception/block3/sepconv1/BatchNorm,xception/block3/sepconv2/btree_conv_1x1,xception/block3/sepconv2/BatchNorm,xception/block4/sepconv1/btree_conv_1x1,xception/block4/sepconv1/BatchNorm,xception/block4/sepconv2/btree_conv_1x1,xception/block4/sepconv2/BatchNorm,xception/block5/sepconv1/btree_conv_1x1,xception/block5/sepconv1/BatchNorm,xception/block5/sepconv2/btree_conv_1x1,xception/block5/sepconv2/BatchNorm,xception/block5/sepconv3/btree_conv_1x1,xception/block5/sepconv3/BatchNorm,xception/block6/sepconv1/btree_conv_1x1,xception/block6/sepconv1/BatchNorm,xception/block6/sepconv2/btree_conv_1x1,xception/block6/sepconv2/BatchNorm,xception/block6/sepconv3/btree_conv_1x1,xception/block6/sepconv3/BatchNorm,xception/block7/sepconv1/btree_conv_1x1,xception/block7/sepconv1/BatchNorm,xception/block7/sepconv2/btree_conv_1x1,xception/block7/sepconv2/BatchNorm,xception/block7/sepconv3/btree_conv_1x1,xception/block7/sepconv3/BatchNorm,xception/block8/sepconv1/btree_conv_1x1,xception/block8/sepconv1/BatchNorm,xception/block8/sepconv2/btree_conv_1x1,xception/block8/sepconv2/BatchNorm,xception/block8/sepconv3/btree_conv_1x1,xception/block8/sepconv3/BatchNorm,xception/block9/sepconv1/btree_conv_1x1,xception/block9/sepconv1/BatchNorm,xception/block9/sepconv2/btree_conv_1x1,xception/block9/sepconv2/BatchNorm,xception/block9/sepconv3/btree_conv_1x1,xception/block9/sepconv3/BatchNorm,xception/block10/sepconv1/btree_conv_1x1,xception/block10/sepconv1/BatchNorm,xception/block10/sepconv2/btree_conv_1x1,xception/block10/sepconv2/BatchNorm,xception/block10/sepconv3/btree_conv_1x1,xception/block10/sepconv3/BatchNorm,xception/block11/sepconv1/btree_conv_1x1,xception/block11/sepconv1/BatchNorm,xception/block11/sepconv2/btree_conv_1x1,xception/block11/sepconv2/BatchNorm,xception/block11/sepconv3/btree_conv_1x1,xception/block11/sepconv3/BatchNorm,xception/block12/sepconv1/btree_conv_1x1,xception/block12/sepconv1/BatchNorm,xception/block12/sepconv2/btree_conv_1x1,xception/block12/sepconv2/BatchNorm,xception/block12/sepconv3/btree_conv_1x1,xception/block5/sepconv3/BatchNorm \
     --ignore_missing_vars=True \
     --save_summaries_secs=60 \
     --save_interval_secs=600 \
     --weight_decay=0.000000001 \
     --optimizer=rmsprop \
     --learning_rate=0.001 \
-    --learning_rate_decay_factor=0.94 \
+    --learning_rate_decay_factor=0.1 \
     --moving_average_decay=0.999 \
     --batch_size=16 &
 
