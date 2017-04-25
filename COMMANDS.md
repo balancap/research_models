@@ -205,7 +205,7 @@ nohup python train_image_classifier.py \
     --model_name=xception_btree \
     --labels_offset=1 \
     --checkpoint_path=${CHECKPOINT_PATH} \
-    --trainable_scopes=xception/block2/sepconv1/btree_conv_1x1,xception/block2/sepconv1/BatchNorm \
+    --trainable_scopes=xception/block2/sepconv1/btree_conv_1x1,xception/block2/sepconv1/BatchNorm,xception/block2/sepconv2/btree_conv_1x1,xception/block2/sepconv2/BatchNorm,xception/block3/sepconv1/btree_conv_1x1,xception/block3/sepconv1/BatchNorm,xception/block3/sepconv2/btree_conv_1x1,xception/block3/sepconv2/BatchNorm \
     --ignore_missing_vars=True \
     --save_summaries_secs=60 \
     --save_interval_secs=600 \
@@ -214,7 +214,7 @@ nohup python train_image_classifier.py \
     --learning_rate=0.001 \
     --learning_rate_decay_factor=0.94 \
     --moving_average_decay=0.999 \
-    --batch_size=24 &
+    --batch_size=16 &
 
 DATASET_DIR=/media/paul/DataExt4/ImageNet/Dataset
 python eval_image_classifier.py \
