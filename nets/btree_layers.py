@@ -158,6 +158,7 @@ def btree_block(
         weights = []
         w_shape = [bsize, bsize_out]
         for i in range(n_blocks):
+            weights_initializer = tf.contrib.layers.variance_scaling_initializer(factor=2.0, mode='FAN_IN', uniform=False)
             weights.append(variables.model_variable(
                 'btree_weights_%i' % i,
                 shape=w_shape,
