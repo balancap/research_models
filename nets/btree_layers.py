@@ -134,10 +134,10 @@ def btree_block(
         nchannels = inshape[-1]     # Note: suppose to be statically defined!
 
         # Pad to be a factor of block size.
-        paddings = [[0, 0], [0, 0], [0, 0], [0, nchannels % bsize]]
+        n_blocks = math.ceil(nchannels / bsize)
+        nchannels_pad = n_blocks * bsize
+        paddings = [[0, 0], [0, 0], [0, 0], [0, nchannels_pad - nchannels]]
         inputs = tf.pad(inputs, paddings, mode='CONSTANT')
-        nchannels_pad = nchannels + nchannels % bsize
-        n_blocks = nchannels_pad // bsize
 
         # Output shape...
         num_outputs = nchannels if num_outputs is None else num_outputs
