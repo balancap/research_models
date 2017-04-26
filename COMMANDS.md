@@ -230,6 +230,39 @@ python eval_image_classifier.py \
 
 
 # ===========================================================================
+# Xception B-tree distillation
+# ===========================================================================
+DATASET_DIR=/home/paul/Development/Datasets/ImageNet
+TRAIN_DIR=./logs/log_xception_btree_1
+CHECKPOINT_PATH=./checkpoints/xception_weights_tf_dim_ordering_tf_kernels.ckpt
+
+DATASET_DIR=/media/paul/DataExt4/ImageNet/Dataset
+TRAIN_DIR=/media/paul/DataExt4/ImageNet/Training/logs_xception_btree/log_008
+CHECKPOINT_PATH=./checkpoints/xception_weights_tf_dim_ordering_tf_kernels.ckpt
+
+python distill_btree_classifier.py \
+    --train_dir=${TRAIN_DIR} \
+    --dataset_dir=${DATASET_DIR} \
+    --dataset_name=imagenet \
+    --dataset_split_name=train \
+    --model_name=xception \
+    --model_btree=xception_btree \
+    --labels_offset=1 \
+    --checkpoint_path=${CHECKPOINT_PATH} \
+    --trainable_scopes=xception_btree/block2/sepconv1/btree_conv_1x1,xception_btree/block2/sepconv1/BatchNorm,xception_btree/block2/sepconv2/btree_conv_1x1,xception_btree/block2/sepconv2/BatchNorm \
+    --distill_points=block2_1,block2_2 \
+    --ignore_missing_vars=True \
+    --save_summaries_secs=60 \
+    --save_interval_secs=600 \
+    --weight_decay=0.000000001 \
+    --optimizer=rmsprop \
+    --learning_rate=0.001 \
+    --learning_rate_decay_factor=0.1 \
+    --moving_average_decay=0.999 \
+    --batch_size=1
+
+
+# ===========================================================================
 # Dception
 # ===========================================================================
 DATASET_DIR=../datasets/ImageNet

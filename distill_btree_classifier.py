@@ -318,7 +318,7 @@ def _get_init_fn():
             variables_to_restore.append(var)
     # B-tree model: change scope to base model.
     variables_to_restore = \
-        {var.op.name.replace(FLAGS.model_btree, FLAGS.model_base): var
+        {var.op.name.replace(FLAGS.model_btree, FLAGS.model_name): var
          for var in variables_to_restore}
 
     # Get the checkpoint filename to restore...
@@ -354,6 +354,7 @@ def _get_variables_to_train():
 def _distill_loss_function(distill_base, distill_btree, training_points):
     """Distillation loss function: average L2 error between distill points.
     """
+    print('Distillation points:', training_points)
     for k in training_points:
         tf.losses.mean_squared_error(distill_base[k], distill_btree[k], scope=k)
 
@@ -409,7 +410,7 @@ def main(_):
                     common_queue_min=10 * FLAGS.batch_size)
             [image, label] = provider.get(['image', 'label'])
             label -= FLAGS.labels_offset
-            train_image_size = FLAGS.train_image_size or network_fn.default_image_size
+            train_image_size = FLAGS.train_image_size or network_base.default_image_size
 
             image = image_preprocessing_fn(image, train_image_size, train_image_size)
             images, labels = tf.train.batch(
