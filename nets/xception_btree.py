@@ -238,7 +238,8 @@ def xception_arg_scope(weight_decay=0.00001, stddev=0.1, is_training=False):
                          slim.fully_connected,
                          slim.separable_convolution2d,
                          blayers.separable_convolution2d_btree],
-                        weights_regularizer=slim.l2_regularizer(weight_decay)):
+                        weights_regularizer=slim.l2_regularizer(weight_decay),
+                        trainable=is_training):
         with slim.arg_scope(
                 [slim.conv2d, slim.separable_convolution2d,
                  blayers.separable_convolution2d_btree],

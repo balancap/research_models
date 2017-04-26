@@ -154,7 +154,8 @@ def xception_arg_scope(weight_decay=0.00001, stddev=0.1, is_training=False):
 
     # Set weight_decay for weights in Conv and FC layers.
     with slim.arg_scope([slim.conv2d, slim.fully_connected, slim.separable_convolution2d],
-                        weights_regularizer=slim.l2_regularizer(weight_decay)):
+                        weights_regularizer=slim.l2_regularizer(weight_decay),
+                        trainable=is_training):
         with slim.arg_scope(
                 [slim.conv2d, slim.separable_convolution2d],
                 padding='SAME',
