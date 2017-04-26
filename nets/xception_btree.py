@@ -20,18 +20,17 @@ def xception(inputs,
              dropout_keep_prob=0.5,
              prediction_fn=slim.softmax,
              reuse=None,
-             scope='xception'):
+             scope='xception_btree'):
     """Xception model from https://arxiv.org/pdf/1610.02357v2.pdf
 
     The default image size used to train this network is 299x299.
     """
-
     # end_points collect relevant activations for external use, for example
     # summaries or losses.
     end_points = {}
     distill_points = {}
 
-    with tf.variable_scope(scope, 'xception', [inputs]):
+    with tf.variable_scope(scope, 'xception_btree', [inputs]):
         # B-tree parameters.
         bsize = 32
         bheight = None
