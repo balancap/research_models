@@ -45,6 +45,9 @@ def xception(inputs,
         # Residual block 2.
         end_point = 'block2'
         with tf.variable_scope(end_point):
+            bsize = 32
+            bheight = None
+
             res = slim.conv2d(net, 128, [1, 1], stride=2, activation_fn=None, scope='res')
 
             net = blayers.separable_convolution2d_btree(net,
@@ -71,6 +74,9 @@ def xception(inputs,
         # Residual block 3.
         end_point = 'block3'
         with tf.variable_scope(end_point):
+            bsize = 64
+            bheight = None
+
             res = slim.conv2d(net, 256, [1, 1], stride=2, activation_fn=None, scope='res')
             net = tf.nn.relu(net)
             net = blayers.separable_convolution2d_btree(net,
@@ -96,6 +102,9 @@ def xception(inputs,
         # Residual block 4.
         end_point = 'block4'
         with tf.variable_scope(end_point):
+            bsize = 91
+            bheight = None
+
             res = slim.conv2d(net, 728, [1, 1], stride=2, activation_fn=None, scope='res')
             net = tf.nn.relu(net)
             net = blayers.separable_convolution2d_btree(net,
@@ -123,41 +132,42 @@ def xception(inputs,
             end_point = 'block' + str(i + 5)
             with tf.variable_scope(end_point):
                 res = net
-                net = tf.nn.relu(net)
-                net = blayers.separable_convolution2d_btree(net,
-                                                            728, [3, 3], 1,
-                                                            bsize=bsize,
-                                                            bheight=bheight,
-                                                            activation_fn=None,
-                                                            scope='sepconv1')
-                net = tf.nn.relu(net)
-                distill_points[end_point + '_1'] = net
-
-                net = blayers.separable_convolution2d_btree(net,
-                                                            728, [3, 3], 1,
-                                                            bsize=bsize,
-                                                            bheight=bheight,
-                                                            activation_fn=None,
-                                                            scope='sepconv2')
-                net = tf.nn.relu(net)
-                distill_points[end_point + '_2'] = net
-
-                net = blayers.separable_convolution2d_btree(net,
-                                                            728, [3, 3], 1,
-                                                            bsize=bsize,
-                                                            bheight=bheight,
-                                                            activation_fn=None,
-                                                            scope='sepconv3')
-                distill_points[end_point + '_3'] = net
-
-                # net = slim.separable_convolution2d(net, 728, [3, 3], 1, activation_fn=None,
-                #                                    scope='sepconv1')
                 # net = tf.nn.relu(net)
-                # net = slim.separable_convolution2d(net, 728, [3, 3], 1, activation_fn=None,
-                #                                    scope='sepconv2')
+                # net = blayers.separable_convolution2d_btree(net,
+                #                                             728, [3, 3], 1,
+                #                                             bsize=bsize,
+                #                                             bheight=bheight,
+                #                                             activation_fn=None,
+                #                                             scope='sepconv1')
                 # net = tf.nn.relu(net)
-                # net = slim.separable_convolution2d(net, 728, [3, 3], 1, activation_fn=None,
-                #                                    scope='sepconv3')
+                # distill_points[end_point + '_1'] = net
+
+                # net = blayers.separable_convolution2d_btree(net,
+                #                                             728, [3, 3], 1,
+                #                                             bsize=bsize,
+                #                                             bheight=bheight,
+                #                                             activation_fn=None,
+                #                                             scope='sepconv2')
+                # net = tf.nn.relu(net)
+                # distill_points[end_point + '_2'] = net
+
+                # net = blayers.separable_convolution2d_btree(net,
+                #                                             728, [3, 3], 1,
+                #                                             bsize=bsize,
+                #                                             bheight=bheight,
+                #                                             activation_fn=None,
+                #                                             scope='sepconv3')
+                # distill_points[end_point + '_3'] = net
+
+                net = tf.nn.relu(net)
+                net = slim.separable_convolution2d(net, 728, [3, 3], 1, activation_fn=None,
+                                                   scope='sepconv1')
+                net = tf.nn.relu(net)
+                net = slim.separable_convolution2d(net, 728, [3, 3], 1, activation_fn=None,
+                                                   scope='sepconv2')
+                net = tf.nn.relu(net)
+                net = slim.separable_convolution2d(net, 728, [3, 3], 1, activation_fn=None,
+                                                   scope='sepconv3')
                 net = res + net
             end_points[end_point] = net
 

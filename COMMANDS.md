@@ -249,8 +249,8 @@ python distill_btree_classifier.py \
     --model_btree=xception_btree \
     --labels_offset=1 \
     --checkpoint_path=${CHECKPOINT_PATH} \
-    --trainable_scopes=xception_btree/block2/sepconv1/btree_conv_1x1,xception_btree/block2/sepconv1/BatchNorm,xception_btree/block2/sepconv2/btree_conv_1x1,xception_btree/block2/sepconv2/BatchNorm \
-    --distill_points=block2_1,block2_2 \
+    --trainable_scopes=xception_btree/block2/sepconv1/btree_conv_1x1,xception_btree/block2/sepconv1/BatchNorm,xception_btree/block2/sepconv2/btree_conv_1x1,xception_btree/block2/sepconv2/BatchNorm,xception_btree/block3/sepconv1/btree_conv_1x1,xception_btree/block3/sepconv1/BatchNorm,xception_btree/block3/sepconv2/btree_conv_1x1,xception_btree/block3/sepconv2/BatchNorm,xception_btree/block4/sepconv1/btree_conv_1x1,xception_btree/block4/sepconv1/BatchNorm,xception_btree/block4/sepconv2/btree_conv_1x1,xception_btree/block4/sepconv2/BatchNorm \
+    --distill_points=block2_1,block2_2,block3_1,block3_2,block4_1,block4_2 \
     --ignore_missing_vars=True \
     --save_summaries_secs=60 \
     --save_interval_secs=600 \
@@ -259,7 +259,7 @@ python distill_btree_classifier.py \
     --learning_rate=0.001 \
     --learning_rate_decay_factor=0.1 \
     --moving_average_decay=0.999 \
-    --batch_size=1
+    --batch_size=16
 
 
 # ===========================================================================
