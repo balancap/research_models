@@ -28,6 +28,7 @@ def xception(inputs,
     # end_points collect relevant activations for external use, for example
     # summaries or losses.
     end_points = {}
+    distill_points = {}
 
     with tf.variable_scope(scope, 'xception', [inputs]):
         # Block 1.
@@ -42,7 +43,10 @@ def xception(inputs,
         with tf.variable_scope(end_point):
             res = slim.conv2d(net, 128, [1, 1], stride=2, activation_fn=None, scope='res')
             net = slim.separable_convolution2d(net, 128, [3, 3], 1, scope='sepconv1')
+            distill_points[end_point + '_1'] = net
+
             net = slim.separable_convolution2d(net, 128, [3, 3], 1, activation_fn=None, scope='sepconv2')
+            distill_points[end_point + '_2'] = net
             net = slim.max_pool2d(net, [3, 3], stride=2, scope='pool')
             net = res + net
         end_points[end_point] = net
@@ -53,7 +57,9 @@ def xception(inputs,
             res = slim.conv2d(net, 256, [1, 1], stride=2, activation_fn=None, scope='res')
             net = tf.nn.relu(net)
             net = slim.separable_convolution2d(net, 256, [3, 3], 1, scope='sepconv1')
+            distill_points[end_point + '_1'] = net
             net = slim.separable_convolution2d(net, 256, [3, 3], 1, activation_fn=None, scope='sepconv2')
+            distill_points[end_point + '_2'] = net
             net = slim.max_pool2d(net, [3, 3], stride=2, scope='pool')
             net = res + net
         end_points[end_point] = net
@@ -64,7 +70,9 @@ def xception(inputs,
             res = slim.conv2d(net, 728, [1, 1], stride=2, activation_fn=None, scope='res')
             net = tf.nn.relu(net)
             net = slim.separable_convolution2d(net, 728, [3, 3], 1, scope='sepconv1')
+            distill_points[end_point + '_1'] = net
             net = slim.separable_convolution2d(net, 728, [3, 3], 1, activation_fn=None, scope='sepconv2')
+            distill_points[end_point + '_2'] = net
             net = slim.max_pool2d(net, [3, 3], stride=2, scope='pool')
             net = res + net
         end_points[end_point] = net
@@ -78,11 +86,14 @@ def xception(inputs,
                 net = slim.separable_convolution2d(net, 728, [3, 3], 1, activation_fn=None,
                                                    scope='sepconv1')
                 net = tf.nn.relu(net)
+                distill_points[end_point + '_1'] = net
                 net = slim.separable_convolution2d(net, 728, [3, 3], 1, activation_fn=None,
                                                    scope='sepconv2')
                 net = tf.nn.relu(net)
+                distill_points[end_point + '_2'] = net
                 net = slim.separable_convolution2d(net, 728, [3, 3], 1, activation_fn=None,
                                                    scope='sepconv3')
+                distill_points[end_point + '_3'] = net
                 net = res + net
             end_points[end_point] = net
 
@@ -93,7 +104,9 @@ def xception(inputs,
             net = tf.nn.relu(net)
             net = slim.separable_convolution2d(net, 728, [3, 3], 1, activation_fn=None, scope='sepconv1')
             net = tf.nn.relu(net)
+            distill_points[end_point + '_1'] = net
             net = slim.separable_convolution2d(net, 1024, [3, 3], 1, activation_fn=None, scope='sepconv2')
+            distill_points[end_point + '_2'] = net
             net = slim.max_pool2d(net, [3, 3], stride=2, scope='pool')
             net = res + net
         end_points[end_point] = net
@@ -101,7 +114,9 @@ def xception(inputs,
         end_point = 'block14'
         with tf.variable_scope(end_point):
             net = slim.separable_convolution2d(net, 1536, [3, 3], 1, scope='sepconv1')
+            distill_points[end_point + '_1'] = net
             net = slim.separable_convolution2d(net, 2048, [3, 3], 1, scope='sepconv2')
+            distill_points[end_point + '_2'] = net
         end_points[end_point] = net
 
         # Global averaging.
@@ -113,7 +128,7 @@ def xception(inputs,
             end_points['logits'] = logits
             end_points['predictions'] = prediction_fn(logits, scope='Predictions')
 
-        return logits, end_points
+        return logits, end_points, distill_points
 xception.default_image_size = 299
 
 
