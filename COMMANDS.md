@@ -237,10 +237,9 @@ TRAIN_DIR=./logs/log_xception_btree_1
 CHECKPOINT_PATH=./checkpoints/xception_weights_tf_dim_ordering_tf_kernels.ckpt
 
 DATASET_DIR=/media/paul/DataExt4/ImageNet/Dataset
-TRAIN_DIR=/media/paul/DataExt4/ImageNet/Training/logs_xception_btree_distill/log_001
+TRAIN_DIR=/media/paul/DataExt4/ImageNet/Training/logs_xception_btree_distill/log_005
 CHECKPOINT_PATH=./checkpoints/xception_weights_tf_dim_ordering_tf_kernels.ckpt
-
-python distill_btree_classifier.py \
+nohup python distill_btree_classifier.py \
     --train_dir=${TRAIN_DIR} \
     --dataset_dir=${DATASET_DIR} \
     --dataset_name=imagenet \
@@ -256,11 +255,22 @@ python distill_btree_classifier.py \
     --save_interval_secs=600 \
     --weight_decay=0.000000001 \
     --optimizer=rmsprop \
-    --learning_rate=0.001 \
+    --learning_rate=0.1 \
     --learning_rate_decay_factor=0.1 \
     --moving_average_decay=0.999 \
-    --batch_size=16
+    --batch_size=16 &
 
+DATASET_DIR=/media/paul/DataExt4/ImageNet/Dataset
+python eval_image_classifier.py \
+    --alsologtostderr \
+    --checkpoint_path=${TRAIN_DIR} \
+    --dataset_dir=${DATASET_DIR} \
+    --labels_offset=1 \
+    --dataset_name=imagenet \
+    --dataset_split_name=validation \
+    --model_name=xception_btree \
+    --moving_average_decay=0.9999 \
+    --max_num_batches=10
 
 # ===========================================================================
 # Dception

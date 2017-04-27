@@ -386,6 +386,7 @@ def main(_):
         network_base = nets_factory.get_network_fn(
                 FLAGS.model_name,
                 num_classes=(dataset.num_classes - FLAGS.labels_offset),
+                weight_decay=FLAGS.weight_decay,
                 is_training=False)
         network_btree = nets_factory.get_network_fn(
                 FLAGS.model_btree,

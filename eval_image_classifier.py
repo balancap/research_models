@@ -137,7 +137,8 @@ def main(_):
     ####################
     # Define the model #
     ####################
-    logits, _ = network_fn(images)
+    r = network_fn(images)
+    logits = r[0]
 
     if FLAGS.moving_average_decay:
       variable_averages = tf.train.ExponentialMovingAverage(

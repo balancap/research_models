@@ -46,6 +46,7 @@ def xception(inputs,
         end_point = 'block2'
         with tf.variable_scope(end_point):
             bsize = 32
+            bsize = 16
             bheight = None
 
             res = slim.conv2d(net, 128, [1, 1], stride=2, activation_fn=None, scope='res')
@@ -75,6 +76,7 @@ def xception(inputs,
         end_point = 'block3'
         with tf.variable_scope(end_point):
             bsize = 64
+            bsize = 32
             bheight = None
 
             res = slim.conv2d(net, 256, [1, 1], stride=2, activation_fn=None, scope='res')
@@ -102,7 +104,8 @@ def xception(inputs,
         # Residual block 4.
         end_point = 'block4'
         with tf.variable_scope(end_point):
-            bsize = 91
+            # bsize = 91
+            bsize = 48
             bheight = None
 
             res = slim.conv2d(net, 728, [1, 1], stride=2, activation_fn=None, scope='res')
