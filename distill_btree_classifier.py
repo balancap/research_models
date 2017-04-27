@@ -448,8 +448,8 @@ def main(_):
             # Distillation end points fusion!
             end_points = {}
             for k in training_points:
-                end_points['base_' + k] = distill_base[k]
-                end_points['btree_' + k] = distill_btree[k]
+                end_points[k + '_base'] = distill_base[k]
+                end_points[k + '_btree'] = distill_btree[k]
             return end_points
 
         # Gather initial summaries.
