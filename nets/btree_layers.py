@@ -169,44 +169,61 @@ def btree_block(
         #         trainable=trainable,
         #         collections=weights_collections))
 
+        # # Reshape input for computation.
+        # inputs = tf.reshape(inputs, [-1, n_blocks, bsize])
+        # inputs = tf.transpose(inputs, perm=[1, 0, 2])
+        # inreshape = get_shape(inputs)
+        # # Parallel computations...
+        # outputs = []
+        # for i in range(n_blocks):
+        #     # outputs += tf.unstack(tf.matmul(inputs[i], weights[i]), axis=-1)
+        #     net = tf.matmul(inputs[i], weights[i])
+        #     net = tf.transpose(net)
+        #     outputs.append(net)
+
+        # if out_permutation:
+        #     # Use dynamic stitch to permute outputs.
+        #     indices = []
+        #     for i in range(n_blocks):
+        #         indices.append(list(range(i, bsize_out * n_blocks, n_blocks)))
+        #     output = tf.dynamic_stitch(indices, outputs)
+        #     output = tf.reshape(output, [bsize_out * n_blocks, inreshape[1]])
+
+        #     # Permutation of output channels, for B-tree chaining purpose.
+        #     # out_perm = []
+        #     # for i in range(bsize_out):
+        #     #     out_perm += outputs[i::bsize_out]
+        #     # outputs = out_perm
+        # else:
+        #     # Simply concat Tensors! Keeping same order.
+        #     output = tf.concat(outputs, axis=0)
+
+        # # Cut and reshape to NHWC format.
+        # output = output[:num_outputs]
+        # output = tf.transpose(output)
+        # output = tf.reshape(output, inshape[:-1] + [-1])
+
+        # return output
+
         # Reshape input for computation.
         inputs = tf.reshape(inputs, [-1, n_blocks, bsize])
         inputs = tf.transpose(inputs, perm=[1, 0, 2])
-        inreshape = get_shape(inputs)
         # Parallel computations...
         outputs = []
         for i in range(n_blocks):
             # outputs += tf.unstack(tf.matmul(inputs[i], weights[i]), axis=-1)
-            net = tf.matmul(inputs[i], weights[i])
-            net = tf.transpose(net)
-            outputs.append(net)
-
+            outputs += tf.unstack(tf.matmul(inputs[i], weights[i]), axis=-1)
+        # Output permutation.
         if out_permutation:
-            # Use dynamic stitch to permute outputs.
-            indices = []
-            for i in range(n_blocks):
-                indices.append(list(range(i, bsize_out * n_blocks, n_blocks)))
-            output = tf.dynamic_stitch(indices, outputs)
-            output = tf.reshape(output, [bsize_out * n_blocks, inreshape[1]])
-
-            # Permutation of output channels, for B-tree chaining purpose.
-            # out_perm = []
-            # for i in range(bsize_out):
-            #     out_perm += outputs[i::bsize_out]
-            # outputs = out_perm
-        else:
-            # Simply concat Tensors! Keeping same order.
-            output = tf.concat(outputs, axis=0)
-
-        # Cut and reshape to NHWC format.
-        output = output[:num_outputs]
-        output = tf.transpose(output)
-        output = tf.reshape(output, inshape[:-1] + [-1])
+            out_perm = []
+            for i in range(bsize_out):
+                out_perm += outputs[i::bsize_out]
+            outputs = out_perm
 
         # Form output Tensor and reshape.
-        # outputs = outputs[:num_outputs]
-        # output = tf.stack(outputs, axis=-1)
-        # output = tf.reshape(output, inshape[:-1] + [-1])
+        outputs = outputs[:num_outputs]
+        output = tf.stack(outputs, axis=-1)
+        output = tf.reshape(output, inshape[:-1] + [-1])
         # TODO: Bias + BN...
         return output
 
