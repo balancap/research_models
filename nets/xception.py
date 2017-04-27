@@ -42,6 +42,7 @@ def xception(inputs,
         end_point = 'block2'
         with tf.variable_scope(end_point):
             res = slim.conv2d(net, 128, [1, 1], stride=2, activation_fn=None, scope='res')
+
             net = slim.separable_convolution2d(net, 128, [3, 3], 1, scope='sepconv1')
             distill_points[end_point + '_1'] = net
 
