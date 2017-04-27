@@ -145,7 +145,7 @@ tf.app.flags.DEFINE_integer(
         'evaluate the VGG and ResNet architectures which do not use a background '
         'class for the ImageNet dataset.')
 tf.app.flags.DEFINE_string(
-        'model_name', 'inception_v3', 'The name of the architecture to train.')
+        'model_name', 'xception', 'The name of the architecture to train.')
 tf.app.flags.DEFINE_string(
         'preprocessing_name', None, 'The name of the preprocessing to use. If left '
         'as `None`, then the model_name flag is used.')
@@ -162,6 +162,8 @@ tf.app.flags.DEFINE_integer('max_number_of_steps', None,
 tf.app.flags.DEFINE_string(
         'checkpoint_path', None,
         'The path to a checkpoint from which to fine-tune.')
+tf.app.flags.DEFINE_string(
+        'checkpoint_scope', None, 'The name of the original scope.')
 tf.app.flags.DEFINE_string(
         'checkpoint_exclude_scopes', None,
         'Comma-separated list of scopes of variables to exclude when restoring '
@@ -312,6 +314,11 @@ def _get_init_fn():
                 break
         if not excluded:
             variables_to_restore.append(var)
+    # Change scope of variable to restore.
+    if FLAGS.checkpoint_scope is not None:
+        variables_to_restore = \
+            {var.op.name.replace(FLAGS.checkpoint_scope, FLAGS.model_name): var
+             for var in variables_to_restore}
 
     if tf.gfile.IsDirectory(FLAGS.checkpoint_path):
         checkpoint_path = tf.train.latest_checkpoint(FLAGS.checkpoint_path)
@@ -419,7 +426,9 @@ def main(_):
         def clone_fn(batch_queue):
             """Allows data parallelism by creating multiple clones of network_fn."""
             images, labels = batch_queue.dequeue()
-            logits, end_points = network_fn(images)
+            r = network_fn(images)
+            logits = r[0]
+            end_points = r[1]
 
             #############################
             # Specify the loss function #
