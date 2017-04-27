@@ -134,8 +134,6 @@ def btree_block(
         nchannels = inshape[-1]     # Note: suppose to be statically defined!
 
         # Pad to be a factor of block size.
-        print(nchannels, bsize)
-        print(nchannels.__class__, bsize.__class__)
         n_blocks = math.ceil(nchannels / bsize)
         nchannels_pad = n_blocks * bsize
         paddings = [[0, 0], [0, 0], [0, 0], [0, nchannels_pad - nchannels]]
@@ -188,8 +186,6 @@ def btree_block(
             indices = []
             for i in range(n_blocks):
                 indices.append(list(range(i, bsize_out * n_blocks, n_blocks)))
-            print(indices)
-            print(outputs)
             output = tf.dynamic_stitch(indices, outputs)
             output = tf.reshape(output, [bsize_out * n_blocks, inreshape[1]])
 
