@@ -317,7 +317,7 @@ def _get_init_fn():
     # Change scope of variable to restore.
     if FLAGS.checkpoint_scope is not None:
         variables_to_restore = \
-            {var.op.name.replace(FLAGS.checkpoint_scope, FLAGS.model_name): var
+            {var.op.name.replace(FLAGS.model_name, FLAGS.checkpoint_scope): var
              for var in variables_to_restore}
 
     if tf.gfile.IsDirectory(FLAGS.checkpoint_path):
