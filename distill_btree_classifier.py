@@ -355,8 +355,9 @@ def _distill_loss_function(distill_base, distill_btree, training_points):
     """Distillation loss function: average L2 error between distill points.
     """
     print('Distillation points:', training_points)
-    for k in training_points:
-        tf.losses.mean_squared_error(distill_base[k], distill_btree[k], scope=k)
+    with tf.name_scope('distill_losses'):
+        for k in training_points:
+            tf.losses.mean_squared_error(distill_base[k], distill_btree[k], scope=k)
 
 
 def main(_):
@@ -443,7 +444,13 @@ def main(_):
                 training_points = [scope.strip() for scope in FLAGS.distill_points.split(',')]
             _distill_loss_function(distill_base, distill_btree,
                                    training_points)
-            return end_points_btree
+
+            # Distillation end points fusion!
+            end_points = {}
+            for k in training_points:
+                end_points['base_' + k] = distill_base[k]
+                end_points['btree_' + k] = distill_btree[k]
+            return end_points
 
         # Gather initial summaries.
         summaries = set(tf.get_collection(tf.GraphKeys.SUMMARIES))
