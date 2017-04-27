@@ -225,6 +225,11 @@ def btree_block(
         output = tf.stack(outputs, axis=-1)
         output = tf.reshape(output, inshape[:-1] + [-1])
         # TODO: Bias + BN...
+        # Bias component...
+        if biases_initializer is not None:
+            output = tf.contrib.layers.bias_add(output,
+                                                initializer=biases_initializer,
+                                                regularizer=biases_regularizer)
         return output
 
 
@@ -263,6 +268,7 @@ def btree_conv_1x1(
         outputs = inputs
         for i in range(bheight):
             scope = 'block_%i' % i
+            bias_initializer = biases_initializer if i+1 != bheight else None
             outputs = btree_block(
                 outputs,
                 num_outputs=num_outputs,
@@ -273,7 +279,7 @@ def btree_conv_1x1(
                 normalizer_params=normalizer_params,
                 weights_initializer=weights_initializer,
                 weights_regularizer=weights_regularizer,
-                biases_initializer=biases_initializer,
+                biases_initializer=bias_initializer,
                 biases_regularizer=biases_regularizer,
                 reuse=reuse,
                 variables_collections=variables_collections,
