@@ -111,30 +111,31 @@ def xception(inputs,
         end_point = 'block4'
         with tf.variable_scope(end_point):
             # bsize = 91
-            bsize = 48
+            bsize = 128
             bheight = None
 
             res = slim.conv2d(net, 728, [1, 1], stride=2, activation_fn=None, scope='res')
             net = tf.nn.relu(net)
 
-            # net = blayers.separable_convolution2d_btree(net,
-            #                                             728, [3, 3], 1,
-            #                                             bsize=bsize,
-            #                                             bheight=bheight,
-            #                                             scope='sepconv1')
-            # distill_points[end_point + '_1'] = net
-            # net = blayers.separable_convolution2d_btree(net,
-            #                                             728, [3, 3], 1,
-            #                                             bsize=bsize,
-            #                                             bheight=bheight,
-            #                                             activation_fn=None,
-            #                                             scope='sepconv2')
-            # distill_points[end_point + '_2'] = net
-
-            net = slim.separable_convolution2d(net, 728, [3, 3], 1, scope='sepconv1')
+            net = blayers.separable_convolution2d_btree(net,
+                                                        728, [3, 3], 1,
+                                                        bsize=bsize,
+                                                        bheight=bheight,
+                                                        scope='sepconv1')
             distill_points[end_point + '_1'] = net
-            net = slim.separable_convolution2d(net, 728, [3, 3], 1, activation_fn=None, scope='sepconv2')
+            bsize = 182
+            net = blayers.separable_convolution2d_btree(net,
+                                                        728, [3, 3], 1,
+                                                        bsize=bsize,
+                                                        bheight=bheight,
+                                                        activation_fn=None,
+                                                        scope='sepconv2')
             distill_points[end_point + '_2'] = net
+
+            # net = slim.separable_convolution2d(net, 728, [3, 3], 1, scope='sepconv1')
+            # distill_points[end_point + '_1'] = net
+            # net = slim.separable_convolution2d(net, 728, [3, 3], 1, activation_fn=None, scope='sepconv2')
+            # distill_points[end_point + '_2'] = net
             net = slim.max_pool2d(net, [3, 3], stride=2, scope='pool')
             net = res + net
         end_points[end_point] = net
