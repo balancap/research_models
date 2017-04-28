@@ -194,9 +194,11 @@ DATASET_DIR=/home/paul/Development/Datasets/ImageNet
 TRAIN_DIR=./logs/log_xception_btree_1
 CHECKPOINT_PATH=./checkpoints/xception_weights_tf_dim_ordering_tf_kernels.ckpt
 
-DATASET_DIR=/media/paul/DataExt4/ImageNet/Dataset
-TRAIN_DIR=/media/paul/DataExt4/ImageNet/Training/logs_xception_btree/log_008
 CHECKPOINT_PATH=./checkpoints/xception_weights_tf_dim_ordering_tf_kernels.ckpt
+
+DATASET_DIR=/media/paul/DataExt4/ImageNet/Dataset
+TRAIN_DIR=/media/paul/DataExt4/ImageNet/Training/logs_xception_btree/log_018
+CHECKPOINT_PATH=/media/paul/DataExt4/ImageNet/Training/logs_xception_btree/log_017/model.ckpt-6332
 nohup python train_image_classifier.py \
     --train_dir=${TRAIN_DIR} \
     --dataset_dir=${DATASET_DIR} \
