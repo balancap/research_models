@@ -1,0 +1,137 @@
+# Copyright 2017 Paul Balanca. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ==============================================================================
+"""Contains model definitions for MobileNets
+"""
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
+import tensorflow as tf
+# from models import model
+from nets import custom_layers
+
+slim = tf.contrib.slim
+
+
+# =========================================================================== #
+# Functional definition.
+# =========================================================================== #
+def mobilenets_pre_rescaling(images, is_training=True):
+    """Rescales an images Tensor before feeding the network
+    Input tensor supposed to be in [0, 256) range.
+    """
+    # Rescale to [-1,1] instead of [0, 1)
+    images *= 1. / 255.
+    images = tf.subtract(images, 0.5)
+    images = tf.multiply(images, 2.0)
+    return images
+
+
+def mobilenets_arg_scope(weight_decay=0.00004,
+                         data_format='NCHW',
+                         batch_norm_decay=0.9997,
+                         batch_norm_epsilon=0.001,
+                         is_training=True):
+    """Defines the default arg scope for MobileNets models.
+    """
+    batch_norm_params = {
+        'decay': batch_norm_decay,
+        'epsilon': batch_norm_epsilon,
+        'updates_collections': tf.GraphKeys.UPDATE_OPS,
+        'fused': True,
+        'data_format': data_format,
+        'is_training': is_training,
+    }
+    normalizer_fn = slim.batch_norm
+    normalizer_params = batch_norm_params
+    # Set weight_decay for weights in Conv and FC layers.
+    with slim.arg_scope([slim.conv2d, slim.separable_conv2d],
+                        weights_regularizer=slim.l2_regularizer(weight_decay)):
+        with slim.arg_scope(
+                [slim.conv2d, slim.separable_conv2d],
+                weights_initializer=slim.variance_scaling_initializer(),
+                activation_fn=tf.nn.relu,
+                normalizer_fn=normalizer_fn,
+                normalizer_params=normalizer_params,
+                padding='SAME'):
+            # Data format scope...
+            with slim.arg_scope([slim.conv2d, slim.separable_conv2d,
+                                 slim.max_pool2d, slim.avg_pool2d,
+                                 custom_layers.concat_channels,
+                                 custom_layers.channel_to_last,
+                                 custom_layers.spatial_mean],
+                                data_format=data_format) as sc:
+                return sc
+
+
+def mobilenets(inputs,
+               num_classes=1001,
+               width_multiplier=1.0,
+               is_training=True,
+               dropout_keep_prob=0.5,
+               scope='MobileNets'):
+    """MobileNets implementation.
+    Args:
+        inputs: a tensor of size [batch_size, height, width, channels].
+        num_classes: number of predicted classes.
+        is_training: whether or not the model is being trained.
+        dropout_keep_prob: the probability that activations are kept in the dropout
+            layers during training.
+        scope: Optional scope for the variables.
+
+    Returns:
+        the last op containing the log predictions and end_points dict.
+    """
+    def mobilenet_block(inputs, num_out_channels, stride=[1, 1],
+                        scope=None):
+        """Basic MobileNet block combining:
+         - depthwise conv + BN + relu
+         - 1x1 conv + BN + relu
+        """
+        with tf.variable_scope(scope, 'block', [inputs]) as sc:
+            num_out_channels = int(num_out_channels * width_multiplier)
+            kernel_size = [3, 3]
+            # Depthwise convolution.
+            net = slim.separable_conv2d(inputs, None, kernel_size,
+                                        depth_multiplier=1, stride=stride,
+                                        scope='conv_dw')
+            # Pointwise convolution.
+            net = slim.conv2d(inputs, num_out_channels, kernel_size,
+                              scope='conv_pw')
+            return net
+
+    with tf.variable_scope(scope, 'MobileNets', [inputs]) as sc:
+        end_points = {}
+        # First full convolution...
+        net = slim.conv2d(inputs, 32, [3, 3], stride=[2, 2], scope='block1')
+        # Then, MobileNet blocks!
+        net = mobilenet_block(net, 64, scope='block2')
+        net = mobilenet_block(net, 128, stride=[2, 2], scope='block3')
+        net = mobilenet_block(net, 128, scope='block4')
+        net = mobilenet_block(net, 256, stride=[2, 2], scope='block5')
+        net = mobilenet_block(net, 256, scope='block6')
+        net = mobilenet_block(net, 512, stride=[2, 2], scope='block7')
+        # Intermediate blocks...
+        for i in range(5):
+            net = mobilenet_block(net, 512, scope='block%i' % (i+8))
+        # Final blocks.
+        net = mobilenet_block(net, 1024, stride=[2, 2], scope='block13')
+        net = mobilenet_block(net, 1024, scope='block14')
+        # Spatial pooling + fully connected layer.
+        net = custom_layers.spatial_mean(net, scope='spatial_mean14')
+        net = slim.fully_connected(net, num_classes,  scope='fc15')
+
+        return net, end_points
+mobilenets.default_image_size = 224
