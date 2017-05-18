@@ -47,6 +47,7 @@ def mobilenets_arg_scope(weight_decay=0.00004,
     """Defines the default arg scope for MobileNets models.
     """
     batch_norm_params = {
+        'scale': True,
         'decay': batch_norm_decay,
         'epsilon': batch_norm_epsilon,
         'updates_collections': tf.GraphKeys.UPDATE_OPS,
@@ -85,6 +86,7 @@ def mobilenets(inputs,
                width_multiplier=1.0,
                is_training=True,
                dropout_keep_prob=0.5,
+               reuse=None,
                scope='MobileNets'):
     """MobileNets implementation.
     Args:
@@ -113,14 +115,14 @@ def mobilenets(inputs,
                 depth_multiplier=1, stride=stride,
                 scope='conv_dw')
             # Pointwise convolution.
-            net = slim.conv2d(inputs, num_out_channels, kernel_size,
+            net = slim.conv2d(inputs, num_out_channels, [1, 1],
                               scope='conv_pw')
             return net
 
-    with tf.variable_scope(scope, 'MobileNets', [inputs]) as sc:
+    with tf.variable_scope(scope, 'MobileNets', [inputs], reuse=reuse) as sc:
         end_points = {}
         # First full convolution...
-        net = slim.conv2d(inputs, 32, [3, 3], stride=[2, 2], scope='block1')
+        net = slim.conv2d(inputs, 32, [3, 3], stride=[2, 2], scope='conv1')
         # Then, MobileNet blocks!
         net = mobilenet_block(net, 64, scope='block2')
         net = mobilenet_block(net, 128, stride=[2, 2], scope='block3')
