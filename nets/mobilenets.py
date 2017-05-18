@@ -57,10 +57,13 @@ def mobilenets_arg_scope(weight_decay=0.00004,
     normalizer_fn = slim.batch_norm
     normalizer_params = batch_norm_params
     # Set weight_decay for weights in Conv and FC layers.
-    with slim.arg_scope([slim.conv2d, slim.separable_conv2d],
+    with slim.arg_scope([slim.conv2d, slim.separable_conv2d,
+                         slim.fully_connected,
+                         custom_layers.depthwise_convolution2d],
                         weights_regularizer=slim.l2_regularizer(weight_decay)):
         with slim.arg_scope(
-                [slim.conv2d, slim.separable_conv2d],
+                [slim.conv2d, slim.separable_conv2d,
+                 custom_layers.depthwise_convolution2d],
                 weights_initializer=slim.variance_scaling_initializer(),
                 activation_fn=tf.nn.relu,
                 normalizer_fn=normalizer_fn,
@@ -69,6 +72,7 @@ def mobilenets_arg_scope(weight_decay=0.00004,
             # Data format scope...
             with slim.arg_scope([slim.conv2d, slim.separable_conv2d,
                                  slim.max_pool2d, slim.avg_pool2d,
+                                 custom_layers.depthwise_convolution2d,
                                  custom_layers.concat_channels,
                                  custom_layers.channel_to_last,
                                  custom_layers.spatial_mean],
@@ -100,13 +104,14 @@ def mobilenets(inputs,
          - depthwise conv + BN + relu
          - 1x1 conv + BN + relu
         """
-        with tf.variable_scope(scope, 'block', [inputs]) as sc:
+        with tf.variable_scope(scope, 'block', [inputs]):
             num_out_channels = int(num_out_channels * width_multiplier)
             kernel_size = [3, 3]
             # Depthwise convolution.
-            net = slim.separable_conv2d(inputs, None, kernel_size,
-                                        depth_multiplier=1, stride=stride,
-                                        scope='conv_dw')
+            net = custom_layers.depthwise_convolution2d(
+                inputs, kernel_size,
+                depth_multiplier=1, stride=stride,
+                scope='conv_dw')
             # Pointwise convolution.
             net = slim.conv2d(inputs, num_out_channels, kernel_size,
                               scope='conv_pw')
