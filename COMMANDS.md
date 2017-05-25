@@ -347,4 +347,5 @@ python train_image_classifier.py \
     --learning_rate=0.001 \
     --endend_learning_rate=0.00001 \
     --num_epochs_per_decay=20. \
+    --moving_average_decay=0.9999 \
     --batch_size=192
