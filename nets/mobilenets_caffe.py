@@ -21,8 +21,8 @@ from __future__ import division
 from __future__ import print_function
 
 import tensorflow as tf
-from models import model
-from models_slim import custom_layers
+from nets import model
+from nets import custom_layers
 
 slim = tf.contrib.slim
 

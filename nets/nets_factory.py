@@ -30,7 +30,11 @@ from nets import vgg
 from nets import xception
 from nets import dception
 from nets import xception_btree
+
 from nets import mobilenets
+from nets import mobilenets_pool
+from nets import mobilenets_caffe
+from nets import mobilenets_leaders
 
 slim = tf.contrib.slim
 
@@ -49,6 +53,9 @@ networks_map = {'cifarnet': cifarnet.cifarnet,
                 'xception_btree': xception_btree.xception,
                 'dception': dception.dception,
                 'mobilenets': mobilenets.mobilenets,
+                'mobilenets_pool': mobilenets_pool.mobilenets,
+                'mobilenets_caffe': mobilenets_caffe.mobilenets,
+                'mobilenets_leaders': mobilenets_leaders.mobilenets,
                 }
 
 arg_scopes_map = {'cifarnet': cifarnet.cifarnet_arg_scope,
@@ -66,6 +73,9 @@ arg_scopes_map = {'cifarnet': cifarnet.cifarnet_arg_scope,
                   'xception_btree': xception_btree.xception_arg_scope,
                   'dception': dception.dception_arg_scope,
                   'mobilenets': mobilenets.mobilenets_arg_scope,
+                  'mobilenets_pool': mobilenets_pool.mobilenets_arg_scope,
+                  'mobilenets_caffe': mobilenets_caffe.mobilenets_arg_scope,
+                  'mobilenets_leaders': mobilenets_leaders.mobilenets_arg_scope,
                   }
 
 

@@ -59,6 +59,9 @@ def get_preprocessing(name, is_training=False):
         'xception_keras': inception_preprocessing,
         'xception_btree': inception_preprocessing,
         'dception': inception_preprocessing,
+        'mobilenets': inception_preprocessing,
+        'mobilenets_caffe': inception_preprocessing,
+        'mobilenets_pool': inception_preprocessing,
       }
 
     if name not in preprocessing_fn_map:
