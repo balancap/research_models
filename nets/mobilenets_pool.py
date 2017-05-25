@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""Contains model definitions for MobileNets
+"""MobileNets + max/avg pooling.
 """
 from __future__ import absolute_import
 from __future__ import division
@@ -123,7 +123,17 @@ def mobilenets(inputs,
     """
     # MobileNets kernel size and padding (for layers with stride > 1).
     kernel_size = [3, 3]
-    padding = [(kernel_size[0]-1)//2, (kernel_size[1]-1)//2]
+
+    def max_avg_pool2d(net, stride=[2, 2], scope=None):
+        with tf.variable_scope(scope, 'max_avg_pool', [net]) as sc:
+            ksize = [3, 3]
+            padding = [1, 1]
+            # Additional Caffe padding.
+            net = custom_layers.pad2d(net, pad=padding)
+            # Max + Avg pooling.
+            mnet = slim.max_pool2d(net, ksize, stride, padding='VALID')
+            anet = slim.avg_pool2d(net, ksize, stride, padding='VALID')
+            return mnet + anet
 
     def mobilenet_block(net, num_out_channels, stride=[1, 1],
                         scope=None):
@@ -133,32 +143,21 @@ def mobilenets(inputs,
         """
         with tf.variable_scope(scope, 'block', [net]) as sc:
             num_out_channels = int(num_out_channels * width_multiplier)
-            if stride[0] == 1 and stride[1] == 1:
-                # Depthwise convolution with stride=1
-                net = custom_layers.depthwise_convolution2d(
-                    net, kernel_size,
-                    depth_multiplier=1, stride=stride,
-                    scope='conv_dw')
-            else:
-                # Mimic CAFFE padding if stride > 1 => usually better accuracy.
-                net = custom_layers.pad2d(net, pad=padding)
-                net = custom_layers.depthwise_convolution2d(
-                    net, kernel_size, padding='VALID',
-                    depth_multiplier=1, stride=stride,
-                    scope='conv_dw')
+            # Depthwise convolution with stride=1
+            net = custom_layers.depthwise_convolution2d(
+                net, kernel_size, depth_multiplier=1, scope='conv_dw')
+            # Additional pooling when stride > 1.
+            if stride[0] > 1 or stride[1] > 1:
+                net = max_avg_pool2d(net, stride=stride)
             # Pointwise convolution.
-            net = slim.conv2d(net, num_out_channels, [1, 1],
-                              scope='conv_pw')
+            net = slim.conv2d(net, num_out_channels, [1, 1], scope='conv_pw')
             return net
 
     with tf.variable_scope(scope, 'MobileNets', [inputs]) as sc:
         end_points = {}
         # First full convolution...
-        net = custom_layers.pad2d(inputs, pad=padding)
-        net = slim.conv2d(net, 32, kernel_size, stride=[2, 2],
-                          padding='VALID', scope='conv1')
-        # net = slim.conv2d(inputs, 32, kernel_size, stride=[2, 2],
-        #                   padding='SAME', scope='conv1')
+        net = slim.conv2d(inputs, 32, kernel_size, scope='conv1')
+        net = max_avg_pool2d(net, stride=[2, 2], scope='pool1')
         # Then, MobileNet blocks!
         net = mobilenet_block(net, 64, scope='block2')
         net = mobilenet_block(net, 128, stride=[2, 2], scope='block3')

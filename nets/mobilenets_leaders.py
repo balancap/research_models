@@ -13,6 +13,8 @@
 # limitations under the License.
 # ==============================================================================
 """Contains model definitions for MobileNets
+CAFFE-like implementation! Should reproduce the performance announced,
+i.e. around 0.7032 Top-1 Classification.
 """
 from __future__ import absolute_import
 from __future__ import division
@@ -23,6 +25,12 @@ from models import model
 from models_slim import custom_layers
 
 slim = tf.contrib.slim
+
+# VGG mean parameters.
+_R_MEAN = 123.68
+_G_MEAN = 116.78
+_B_MEAN = 103.94
+_SCALING = 0.017
 
 
 # =========================================================================== #
@@ -56,6 +64,9 @@ def mobilenets_pre_rescaling(images, is_training=True):
     images *= 1. / 255.
     images = tf.subtract(images, 0.5)
     images = tf.multiply(images, 2.0)
+    # mean = tf.constant([_R_MEAN, _G_MEAN, _B_MEAN], dtype=images.dtype)
+    # images = images - mean
+    # images = images * _SCALING
     return images
 
 
@@ -83,7 +94,9 @@ def mobilenets_arg_scope(weight_decay=0.00004,
                         weights_regularizer=slim.l2_regularizer(weight_decay)):
         with slim.arg_scope(
                 [slim.conv2d, slim.separable_conv2d,
-                 custom_layers.depthwise_convolution2d],
+                 custom_layers.depthwise_convolution2d,
+                 custom_layers.depthwise_leaders_convolution2d,
+                 custom_layers.leaders_conv2d],
                 weights_initializer=slim.variance_scaling_initializer(),
                 activation_fn=tf.nn.relu,
                 normalizer_fn=normalizer_fn,
@@ -92,9 +105,10 @@ def mobilenets_arg_scope(weight_decay=0.00004,
             # Data format scope...
             with slim.arg_scope([slim.conv2d, slim.separable_conv2d,
                                  slim.max_pool2d, slim.avg_pool2d,
-                                 custom_layers.pad2d,
                                  custom_layers.depthwise_convolution2d,
-                                 custom_layers.concat_channels,
+                                 custom_layers.depthwise_leaders_convolution2d,
+                                 custom_layers.leaders_conv2d,
+                                 custom_layers.pad2d,
                                  custom_layers.channel_to_last,
                                  custom_layers.spatial_squeeze,
                                  custom_layers.spatial_mean],
@@ -107,7 +121,6 @@ def mobilenets(inputs,
                width_multiplier=1.0,
                is_training=True,
                dropout_keep_prob=0.5,
-               pad_logits=True,
                scope='MobileNets'):
     """MobileNets implementation.
     Args:
@@ -121,31 +134,42 @@ def mobilenets(inputs,
     Returns:
         the last op containing the log predictions and end_points dict.
     """
-    # MobileNets kernel size and padding (for layers with stride > 1).
-    kernel_size = [3, 3]
-    padding = [(kernel_size[0]-1)//2, (kernel_size[1]-1)//2]
-
     def mobilenet_block(net, num_out_channels, stride=[1, 1],
-                        scope=None):
+                        leaders=False, scope=None):
         """Basic MobileNet block combining:
          - depthwise conv + BN + relu
          - 1x1 conv + BN + relu
         """
         with tf.variable_scope(scope, 'block', [net]) as sc:
             num_out_channels = int(num_out_channels * width_multiplier)
+            kernel_size = [3, 3]
             if stride[0] == 1 and stride[1] == 1:
-                # Depthwise convolution with stride=1
+                # Classic depthwise convolution with stride=1
                 net = custom_layers.depthwise_convolution2d(
                     net, kernel_size,
                     depth_multiplier=1, stride=stride,
                     scope='conv_dw')
             else:
-                # Mimic CAFFE padding if stride > 1 => usually better accuracy.
-                net = custom_layers.pad2d(net, pad=padding)
-                net = custom_layers.depthwise_convolution2d(
-                    net, kernel_size, padding='VALID',
-                    depth_multiplier=1, stride=stride,
-                    scope='conv_dw')
+                if leaders:
+                    # Special Depthwise Leader convolution when stride > 1
+                    # net = custom_layers.pad2d(net, pad=(1, 1))
+                    net = custom_layers.depthwise_leaders_convolution2d(
+                        net,
+                        kernel_size,
+                        padding='SAME',
+                        stride=stride,
+                        rates=[1, 2, 3],
+                        pooling_sizes=[5, 3, 1],
+                        pooling_type='AVG',
+                        activation_fn=tf.nn.relu,
+                        scope='conv_lead_dw')
+                else:
+                    # Mimic CAFFE padding if stride > 1.
+                    net = custom_layers.pad2d(net, pad=(1, 1))
+                    net = custom_layers.depthwise_convolution2d(
+                        net, kernel_size, padding='VALID',
+                        depth_multiplier=1, stride=stride,
+                        scope='conv_dw')
             # Pointwise convolution.
             net = slim.conv2d(net, num_out_channels, [1, 1],
                               scope='conv_pw')
@@ -153,25 +177,31 @@ def mobilenets(inputs,
 
     with tf.variable_scope(scope, 'MobileNets', [inputs]) as sc:
         end_points = {}
-        # First full convolution...
-        net = custom_layers.pad2d(inputs, pad=padding)
-        net = slim.conv2d(net, 32, kernel_size, stride=[2, 2],
-                          padding='VALID', scope='conv1')
-        # net = slim.conv2d(inputs, 32, kernel_size, stride=[2, 2],
-        #                   padding='SAME', scope='conv1')
+        # First full leades convolution...
+        net = custom_layers.leaders_conv2d(inputs, 32, [3, 3],
+                                           stride=[2, 2],
+                                           rates=[1, 2, 3],
+                                           pooling_sizes=[5, 3, 1],
+                                           pooling_type='AVG',
+                                           scope='lead_conv1')
         # Then, MobileNet blocks!
         net = mobilenet_block(net, 64, scope='block2')
-        net = mobilenet_block(net, 128, stride=[2, 2], scope='block3')
+        net = mobilenet_block(net, 128, stride=[2, 2], leaders=True,
+                              scope='block3')
         net = mobilenet_block(net, 128, scope='block4')
-        net = mobilenet_block(net, 256, stride=[2, 2], scope='block5')
+        net = mobilenet_block(net, 256, stride=[2, 2], leaders=True,
+                              scope='block5')
         net = mobilenet_block(net, 256, scope='block6')
-        net = mobilenet_block(net, 512, stride=[2, 2], scope='block7')
+        net = mobilenet_block(net, 512, stride=[2, 2],  leaders=True,
+                              scope='block7')
         # Intermediate blocks...
         for i in range(5):
             net = mobilenet_block(net, 512, scope='block%i' % (i+8))
         # Final blocks.
         net = mobilenet_block(net, 1024, stride=[2, 2], scope='block13')
+        net = slim.dropout(net, keep_prob=0.8, is_training=is_training)
         net = mobilenet_block(net, 1024, scope='block14')
+        net = slim.dropout(net, keep_prob=0.8, is_training=is_training)
         # Spatial pooling + fully connected layer.
         net = custom_layers.spatial_mean(net, keep_dims=True, scope='spatial_mean14')
         net = slim.conv2d(net, 1000, [1, 1],
@@ -181,9 +211,9 @@ def mobilenets(inputs,
                           biases_initializer=tf.zeros_initializer(),
                           scope='conv_fc15')
         net = custom_layers.spatial_squeeze(net)
+        # net = slim.fully_connected(net, 1000,  scope='fc15')
 
-        # Logits padding: get everyone to the same number of classes.
-        if pad_logits:
-            net = custom_layers.pad_logits(net, pad=(num_classes - 1000, 0))
+        # Logits padding...
+        net = custom_layers.pad_logits(net, pad=(num_classes - 1000, 0))
         return net, end_points
 mobilenets.default_image_size = 224
