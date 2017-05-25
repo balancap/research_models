@@ -324,3 +324,27 @@ python eval_image_classifier.py \
     --model_name=dception \
     --max_num_batches=10
 
+# ===========================================================================
+# MobileNets
+# ===========================================================================
+DATASET_DIR=/media/paul/DataExt4/ImageNet/Dataset
+TRAIN_DIR=/media/paul/DataExt4/ImageNet/training/logs/mobilenet_pool_001
+CHECKPOINT_PATH=./checkpoints/mobilenets.ckpt
+python train_image_classifier.py \
+    --train_dir=${TRAIN_DIR} \
+    --dataset_dir=${DATASET_DIR} \
+    --dataset_name=imagenet \
+    --dataset_split_name=train \
+    --model_name=mobilenets_pool \
+    --labels_offset=0 \
+    --checkpoint_path=${CHECKPOINT_PATH} \
+    --save_summaries_secs=120 \
+    --save_interval_secs=900 \
+    --weight_decay=0.00001 \
+    --learning_rate_decay_type=polynomial \
+    --learning_rate_decay_factor=0.94 \
+    --optimizer=rmsprop \
+    --learning_rate=0.001 \
+    --endend_learning_rate=0.00001 \
+    --num_epochs_per_decay=20. \
+    --batch_size=192
