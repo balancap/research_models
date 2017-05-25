@@ -60,7 +60,7 @@ def mobilenets_pre_rescaling(images, is_training=True):
 
 
 def mobilenets_arg_scope(weight_decay=0.00004,
-                         data_format='NCHW',
+                         data_format='NHWC',
                          batch_norm_decay=0.9997,
                          batch_norm_epsilon=0.00001,
                          is_training=True):
